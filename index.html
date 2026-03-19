@@ -994,7 +994,7 @@
         <div class="resumo-toolbar">
           <div>
             <h2>Resumo Executivo</h2>
-            <p>Resumo financeiro objetivo para leitura do cliente.</p>
+            <p>Resumo financeiro objetivo da operação, sem considerar lançamentos emergenciais nesta leitura.</p>
           </div>
         </div>
 
@@ -2122,6 +2122,10 @@
       return items;
     }
 
+    function getDashboardEntries(){
+      return getCompanyEntries().filter(item => item.origem !== 'emergencial');
+    }
+
     function getEmergencyCompetence(item){
       const ref = item.dataEfetiva || item.vencimento || getTodayStr();
       return String(ref).slice(0,7);
@@ -2147,7 +2151,7 @@
         end = ui.customEnd || today;
       }
 
-      const entries = getCompanyEntries();
+      const entries = getDashboardEntries();
 
       if (ui.periodFilter === 'vencidas') {
         return entries.filter(item => item.tipo === 'despesa' && item.status !== 'realizado' && item.vencimento <= today);
@@ -2400,7 +2404,7 @@
     function updateKPIs(){
       const today = getTodayStr();
       const bounds = getPeriodBounds();
-      const entries = getCompanyEntries();
+      const entries = getDashboardEntries();
 
       const saldoAtual = getProjectedCurrentBalance();
       const flowRows = getFlowRows();
@@ -2431,11 +2435,11 @@
       document.getElementById('kpiSaldoProjetado').textContent = 'R$ ' + formatarValor(saldoProjetado);
 
       document.getElementById('resumoSaldoBancarioAtual').textContent = 'R$ ' + formatarValor(saldoAtual);
-      document.getElementById('resumoSaldoBancarioAtualHelper').textContent = resumoTextoSeguro(getViewSourceLabel());
+      document.getElementById('resumoSaldoBancarioAtualHelper').textContent = resumoTextoSeguro(getViewSourceLabel()) + ' • sem emergenciais';
       document.getElementById('resumoEntradasPrevistas').textContent = 'R$ ' + formatarValor(entradasPeriodo);
-      document.getElementById('resumoEntradasPrevistasHelper').textContent = resumoQuantidadeSegura(previsaoEntries.filter(item => item.tipo === 'receita').length);
+      document.getElementById('resumoEntradasPrevistasHelper').textContent = resumoQuantidadeSegura(previsaoEntries.filter(item => item.tipo === 'receita').length, 'lançamento(s)');
       document.getElementById('resumoSaidasPrevistas').textContent = 'R$ ' + formatarValor(saidasPeriodo);
-      document.getElementById('resumoSaidasPrevistasHelper').textContent = resumoQuantidadeSegura(previsaoEntries.filter(item => item.tipo === 'despesa').length);
+      document.getElementById('resumoSaidasPrevistasHelper').textContent = resumoQuantidadeSegura(previsaoEntries.filter(item => item.tipo === 'despesa').length, 'lançamento(s)');
       document.getElementById('resumoSaldoProjetadoFinal').textContent = 'R$ ' + formatarValor(saldoProjetado);
       document.getElementById('resumoSaldoProjetadoFinalHelper').textContent = bounds.label;
       document.getElementById('resumoTotalVencido').textContent = 'R$ ' + formatarValor(vencidas);
@@ -2480,7 +2484,7 @@
 
     function getPendenciasItems(){
       const bounds = getPeriodBounds();
-      let items = getCompanyEntries().filter(item => item.tipo === 'despesa' && item.status !== 'realizado' && item.vencimento <= bounds.end);
+      let items = getDashboardEntries().filter(item => item.tipo === 'despesa' && item.status !== 'realizado' && item.vencimento <= bounds.end);
       if (ui.priorityFilter !== 'todas') {
         items = items.filter(item => priorityClass(item) === ui.priorityFilter);
       }
@@ -2671,7 +2675,7 @@ function getFlowRows(){
       const today = getTodayStr();
       const start = bounds.start || today;
       const end = bounds.end || today;
-      const allEntries = getCompanyEntries();
+      const allEntries = getDashboardEntries();
       const companyKeys = getVisibleCompanyKeys();
       let runningSnapshot = getCashBalancesSnapshot(companyKeys);
 
