@@ -1,0 +1,3836 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fluxo de Caixa Diário | Malut</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg-primary:#0d1117;
+      --bg-secondary:#161b22;
+      --bg-card:#1c2128;
+      --bg-hover:#252c35;
+      --border:#30363d;
+      --border-light:#3d444d;
+      --text-primary:#e6edf3;
+      --text-secondary:#8b949e;
+      --text-muted:#6e7681;
+      --accent-green:#2ea043;
+      --accent-teal:#3fb9a5;
+      --accent-blue:#58a6ff;
+      --accent-red:#f85149;
+      --accent-yellow:#d29922;
+      --accent-purple:#a371f7;
+      --shadow:0 10px 35px rgba(0,0,0,.28);
+      --critico:#f85149;
+      --alto:#d29922;
+      --medio:#58a6ff;
+      --baixo:#3fb9a5;
+      --aclassificar:#8b949e;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{min-height:100%;width:100%;max-width:100%;overflow-x:hidden;overscroll-behavior-x:none;touch-action:pan-y}
+    body{
+      font-family:'Plus Jakarta Sans',sans-serif;
+      background:var(--bg-primary);
+      color:var(--text-primary);
+      line-height:1.5;
+      display:flex;
+      flex-direction:column;
+      width:100%;
+      max-width:100vw;
+      overflow-x:hidden;
+      position:relative;
+    }
+    [hidden]{display:none!important}
+    button,input,select,textarea{font:inherit}
+    input,select,textarea{
+      background:var(--bg-secondary);
+      color:var(--text-primary);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:.72rem .85rem;
+      width:100%;
+    }
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent-teal);box-shadow:0 0 0 3px rgba(63,185,165,.1)}
+    textarea{resize:vertical;min-height:82px}
+    .mono{font-family:'JetBrains Mono',monospace}
+    .header{
+      position:sticky;top:0;z-index:40;
+      background:rgba(22,27,34,.96);
+      backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--border);
+      padding:1rem 1.25rem;
+    }
+    .header-content,.tabs-container,.main-content,.footer-inner{
+      width:min(1600px,calc(100% - 2rem));
+      max-width:calc(100vw - 2rem);
+      margin:0 auto;
+    }
+    .header-content{
+      display:flex;justify-content:flex-start;align-items:center;gap:1rem;flex-wrap:wrap;
+    }
+    .logo h1{
+      font-size:1.15rem;font-weight:800;display:flex;align-items:center;gap:.7rem;
+    }
+    .logo h1::before{
+      content:'';width:10px;height:28px;border-radius:999px;
+      background:linear-gradient(180deg,var(--accent-teal),var(--accent-green));
+      display:inline-block;
+    }
+    .logo small{color:var(--text-secondary);display:block;font-size:.76rem;margin-top:.2rem}
+    .header-actions--hidden{display:none!important}
+    .toolbar--dashboard-top{align-items:flex-start}
+    .toolbar-right--top{justify-content:flex-end;flex:1 1 420px}
+    .toolbar-right--top .profile-badge,.toolbar-right--top .company-chip,.toolbar-right--top .stat-chip,.toolbar-right--top .config-group{min-height:48px}
+    .toolbar-right--top .config-group{padding:.45rem .72rem}
+    .toolbar-right--top .config-group label{font-size:.64rem}
+    .toolbar-right--top .config-group select{width:auto;min-width:150px;padding:.42rem .55rem}
+    .toolbar-actions{display:flex;gap:.65rem;flex-wrap:wrap;align-items:center}
+    .meta-inputs-hidden{display:none!important}
+    .header-actions{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+    .config-group,.profile-badge,.company-chip,.stat-chip{
+      display:flex;align-items:center;gap:.55rem;
+      background:var(--bg-card);border:1px solid var(--border);
+      padding:.5rem .8rem;border-radius:12px;
+    }
+    .config-group{min-height:48px}
+    .config-group label{
+      font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);white-space:nowrap
+    }
+    .config-group input,.config-group select{padding:.42rem .55rem;font-size:.84rem;border-radius:8px}
+    .config-group input[type="text"]{width:120px}
+    .config-group input[type="date"]{width:150px}
+    .config-group input[type="time"]{width:96px}
+    .profile-badge strong,.company-chip strong,.stat-chip strong{font-size:.84rem}
+    .muted{color:var(--text-secondary)}
+    .btn{
+      border:none;border-radius:12px;cursor:pointer;
+      padding:.72rem 1rem;font-weight:700;font-size:.82rem;
+      display:inline-flex;align-items:center;justify-content:center;gap:.45rem;
+      transition:.18s ease;min-height:44px;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:disabled,.readonly .admin-only,.readonly [data-admin-only="true"]{
+      opacity:.45;pointer-events:none;
+    }
+    .btn-primary{background:linear-gradient(135deg,var(--accent-green),var(--accent-teal));color:#fff}
+    .btn-secondary{background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border)}
+    .btn-ghost-discreet{padding:.48rem .72rem;min-height:40px;border-radius:12px;background:rgba(255,255,255,.02);color:var(--text-secondary);border:1px solid rgba(255,255,255,.08);font-size:.82rem;box-shadow:none}
+    .btn-ghost-discreet:hover{background:rgba(255,255,255,.05);color:var(--text-primary);border-color:rgba(255,255,255,.14)}
+    .toolbar-actions--discreet{margin-left:-.1rem}
+    .toolbar-right--top-clean{gap:.75rem;justify-content:flex-end}
+    .toolbar-actions--logout-end{margin-left:auto}
+    .btn-icon-only{width:40px;min-width:40px;padding:.48rem;display:inline-flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;line-height:1}
+    .btn-icon-only:hover{transform:translateY(-1px)}
+    .btn-success{background:var(--accent-green);color:#fff}
+    .btn-warning{background:var(--accent-yellow);color:#111}
+    .btn-danger{background:var(--accent-red);color:#fff}
+    .btn-small{padding:.4rem .62rem;font-size:.73rem;min-height:34px;border-radius:8px}
+    .btn-icon{min-width:34px;padding:.4rem}
+    .tabs-container{padding-top:1rem}
+    .tabs{display:flex;gap:.25rem;border-bottom:1px solid var(--border);overflow:auto}
+    .tab{
+      background:none;border:none;color:var(--text-secondary);cursor:pointer;
+      padding:.82rem 1rem;font-weight:700;font-size:.84rem;white-space:nowrap;
+      border-bottom:2px solid transparent;
+    }
+    .tab.active{color:var(--accent-teal);border-bottom-color:var(--accent-teal)}
+    .main-content{padding:1.35rem 0 2rem;flex:1;max-width:100%;overflow-x:hidden}
+    .toolbar{
+      display:flex;justify-content:space-between;align-items:center;gap:.9rem;flex-wrap:wrap;
+      margin-bottom:1rem;
+    }
+    .toolbar-left,.toolbar-right{display:flex;gap:.65rem;flex-wrap:wrap;align-items:center}
+    .pill-group{
+      background:var(--bg-card);border:1px solid var(--border);padding:.28rem;border-radius:14px;
+      display:flex;gap:.25rem;flex-wrap:wrap;
+    }
+    .pill{
+      background:transparent;border:none;color:var(--text-secondary);cursor:pointer;
+      padding:.6rem .82rem;border-radius:10px;font-weight:700;font-size:.78rem;
+    }
+    .pill.active,.pill:hover{background:var(--bg-hover);color:var(--text-primary)}
+    .pill.active.accent{background:rgba(63,185,165,.14);color:var(--accent-teal);border:1px solid rgba(63,185,165,.24)}
+    .inline-fields{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+    .inline-fields .field{min-width:165px}
+    .panel{
+      background:var(--bg-card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:var(--shadow);
+    }
+    .panel-header{
+      padding:1rem 1.1rem;border-bottom:1px solid var(--border);
+      background:linear-gradient(180deg,rgba(255,255,255,.02),transparent);
+      display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap;
+    }
+    .panel-title{font-size:.95rem;font-weight:800}
+    .panel-subtitle{font-size:.75rem;color:var(--text-secondary)}
+    .panel-body{padding:1rem}
+    .kpi-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.9rem;margin-bottom:1rem;
+    }
+    .kpi-card{
+      background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:1.05rem;position:relative;overflow:hidden;
+    }
+    .kpi-card:before{
+      content:'';position:absolute;inset:0 0 auto 0;height:4px
+    }
+    .kpi-card.teal:before{background:var(--accent-teal)}
+    .kpi-card.green:before{background:var(--accent-green)}
+    .kpi-card.red:before{background:var(--accent-red)}
+    .kpi-card.yellow:before{background:var(--accent-yellow)}
+    .kpi-card.blue:before{background:var(--accent-blue)}
+    .kpi-card.purple:before{background:var(--accent-purple)}
+    .kpi-label{
+      font-size:.68rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.45rem
+    }
+    .kpi-value{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:1.16rem}
+    .positive{color:var(--accent-green)}
+    .negative{color:var(--accent-red)}
+    .dashboard-grid{
+      display:grid;grid-template-columns:minmax(0,1.45fr) minmax(320px,400px);gap:1rem;
+      align-items:start;
+    }
+    .dashboard-grid > :first-child{order:2}
+    .dashboard-grid > :last-child{order:1}
+    .projecao-strip{
+      display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.85rem;margin:0 0 1rem;
+    }
+    .projecao-card{
+      background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.01));
+      border:1px solid var(--border);border-radius:18px;padding:.95rem 1rem;position:relative;overflow:hidden;min-width:0;
+    }
+    .projecao-card::before{content:'';position:absolute;left:0;right:0;top:0;height:4px;background:var(--border-light)}
+    .projecao-card[data-tone='teal']::before{background:var(--accent-teal)}
+    .projecao-card[data-tone='blue']::before{background:var(--accent-blue)}
+    .projecao-card[data-tone='yellow']::before{background:var(--accent-yellow)}
+    .projecao-card[data-tone='red']::before{background:var(--accent-red)}
+    .projecao-label{font-size:.67rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;font-weight:800}
+    .projecao-value{margin-top:.55rem;font-family:'JetBrains Mono',monospace;font-size:1.08rem;font-weight:800;line-height:1.1}
+    .projecao-helper{margin-top:.4rem;font-size:.74rem;color:var(--text-secondary)}
+    .painel-insights{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem;margin-top:.9rem}
+    .insight-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:14px;padding:.85rem .95rem}
+    .insight-title{font-size:.68rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35rem}
+    .insight-value{font-weight:800;font-size:.9rem;line-height:1.35}
+    .insight-helper{font-size:.74rem;color:var(--text-secondary);margin-top:.28rem}
+    .risk-badge-inline{display:inline-flex;align-items:center;gap:.35rem;padding:.22rem .5rem;border-radius:999px;font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;margin-top:.35rem}
+    .risk-badge-inline.critico{background:rgba(248,81,73,.18);color:var(--accent-red)}
+    .risk-badge-inline.atencao{background:rgba(210,153,34,.18);color:var(--accent-yellow)}
+    .risk-badge-inline.estavel{background:rgba(46,160,67,.18);color:var(--accent-green)}
+    .table-wrap{overflow:auto;-webkit-overflow-scrolling:touch}
+    table{width:100%;border-collapse:collapse;min-width:860px}
+    th,td{padding:.72rem .85rem;border-bottom:1px solid var(--border);vertical-align:top}
+    th{
+      text-align:left;font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;
+      color:var(--text-secondary);background:var(--bg-secondary);position:sticky;top:0;z-index:1;
+    }
+    tr:hover td{background:rgba(255,255,255,.01)}
+    tr.hoje td{background:rgba(63,185,165,.08)}
+    tr.fim-semana td{background:rgba(88,166,255,.04)}
+    tr.saldo-negativo td{background:rgba(248,81,73,.08)}
+    .value{font-family:'JetBrains Mono',monospace;font-weight:700;white-space:nowrap}
+    .entrada{color:var(--accent-green)}
+    .saida{color:var(--accent-red)}
+    .tag,.status-badge,.badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:.18rem .5rem;border-radius:999px;font-size:.67rem;font-weight:800;
+      text-transform:uppercase;letter-spacing:.03em
+    }
+    .badge{background:rgba(248,81,73,.16);color:var(--accent-red)}
+    .tag.critico{background:rgba(248,81,73,.18);color:var(--critico)}
+    .tag.alto{background:rgba(210,153,34,.18);color:var(--alto)}
+    .tag.medio{background:rgba(88,166,255,.16);color:var(--medio)}
+    .tag.baixo{background:rgba(63,185,165,.16);color:var(--baixo)}
+    .tag.aclassificar{background:rgba(139,148,158,.18);color:var(--text-secondary)}
+    .status-badge.previsto{background:rgba(88,166,255,.16);color:var(--accent-blue)}
+    .status-badge.provisionado{background:rgba(210,153,34,.18);color:var(--accent-yellow)}
+    .status-badge.realizado{background:rgba(46,160,67,.18);color:var(--accent-green)}
+    .status-badge.vencida{background:rgba(248,81,73,.18);color:var(--accent-red)}
+    .status-badge.aberta{background:rgba(88,166,255,.16);color:var(--accent-blue)}
+    .status-badge.realizar{background:rgba(63,185,165,.18);color:var(--accent-teal)}
+    .entity-highlight{
+      background:linear-gradient(135deg,rgba(63,185,165,.14),rgba(46,160,67,.12));
+      border:1px solid rgba(63,185,165,.22);border-radius:16px;padding:.85rem 1rem;margin-bottom:1rem;
+    }
+    .entity-highlight strong{display:block;font-size:.82rem;letter-spacing:.04em;text-transform:uppercase;color:var(--accent-teal)}
+    .dashboard-note{font-size:.78rem;color:var(--text-secondary)}
+    .pendencia-item{
+      background:var(--bg-secondary);border:1px solid var(--border);border-left:4px solid var(--border);
+      border-radius:14px;padding:.9rem;margin-bottom:.7rem;
+    }
+    .pendencia-item.critico{border-left-color:var(--critico)}
+    .pendencia-item.alto{border-left-color:var(--alto)}
+    .pendencia-item.medio{border-left-color:var(--medio)}
+    .pendencia-item.baixo{border-left-color:var(--baixo)}
+    .pendencia-header,.row-between{
+      display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;flex-wrap:wrap
+    }
+    .pendencia-title{font-weight:800;font-size:.88rem}
+    .pendencia-meta{display:flex;flex-wrap:wrap;gap:.35rem;margin:.45rem 0 .65rem}
+    .pendencia-actions,.action-group{display:flex;flex-wrap:wrap;gap:.35rem}
+    .empty-state{
+      text-align:center;padding:2.5rem 1rem;color:var(--text-secondary)
+    }
+
+    .panel-header-block{display:grid;gap:.35rem}
+    .pendencia-summary{
+      display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;
+      margin-bottom:1rem;
+    }
+    .pendencia-summary-card{
+      background:var(--bg-secondary);border:1px solid var(--border);border-radius:14px;padding:.85rem .95rem;
+    }
+    .pendencia-filters{
+      display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem;margin-bottom:.85rem;
+    }
+    .pendencia-toolbar{
+      display:flex;justify-content:space-between;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.85rem;
+    }
+    .check-inline{display:inline-flex;align-items:center;gap:.55rem;font-size:.86rem;color:var(--text-secondary);cursor:pointer}
+    .check-inline input{width:auto;accent-color:var(--accent-teal)}
+    .pendencia-select{display:flex;align-items:flex-start;gap:.8rem}
+    .pendencia-select input{width:auto;min-width:18px;margin-top:.15rem;accent-color:var(--accent-teal)}
+    .pendencia-base-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin:0 0 .85rem}
+    .pendencia-base-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:14px;padding:.8rem .9rem}
+    .pendencia-base-card strong{display:block;font-size:.82rem;letter-spacing:.04em;text-transform:uppercase;color:var(--accent-teal);margin-bottom:.3rem}
+    .pendencia-base-card span{font-family:'JetBrains Mono',monospace;font-weight:800}
+    .pendencia-summary-label{
+      font-size:.68rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.32rem
+    }
+    .pendencia-summary-value{
+      font-family:'JetBrains Mono',monospace;font-weight:800;font-size:1.05rem;line-height:1.15
+    }
+    .priority-action-inline{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+    .priority-inline-select{
+      min-width:150px;width:auto;max-width:100%;padding:.5rem .65rem;border-radius:10px;
+      background:var(--bg-card);border:1px solid var(--border-light);color:var(--text-primary)
+    }
+                        .mobile-stable,.mobile-stable *{max-width:100%}
+    .empty-state .emoji{font-size:2.3rem;opacity:.55;margin-bottom:.5rem}
+    .flow-details{display:grid;gap:.3rem;min-width:260px}
+    .chart-wrap{position:relative}
+    .chart-tooltip{position:absolute;pointer-events:none;z-index:5;min-width:240px;max-width:320px;background:rgba(13,17,23,.98);border:1px solid var(--border-light);border-radius:14px;padding:.75rem .85rem;box-shadow:var(--shadow);opacity:0;transform:translate(-50%,-110%);transition:opacity .12s ease;backdrop-filter:blur(10px)}
+    .chart-tooltip.active{opacity:1}
+    .chart-tooltip-title{font-size:.82rem;font-weight:800;margin-bottom:.5rem}
+    .chart-tooltip-grid{display:grid;gap:.28rem}
+    .chart-tooltip-row{display:flex;justify-content:space-between;gap:.75rem;font-size:.74rem}
+    .chart-tooltip-row strong{font-family:'JetBrains Mono',monospace}
+    .chart-tooltip-row .entrada{color:var(--accent-green)}
+    .chart-tooltip-row .saida{color:var(--accent-red)}
+    .flow-launch-list{display:grid;gap:.24rem;margin-top:.55rem;padding-top:.45rem;border-top:1px solid rgba(255,255,255,.08)}
+    .flow-launch-item{display:flex;justify-content:space-between;gap:.65rem;font-size:.72rem}
+    .flow-launch-item span:first-child{color:var(--text-secondary)}
+    .flow-launch-item strong{font-family:'JetBrains Mono',monospace}
+    .flow-launch-empty{color:var(--text-muted);font-size:.72rem}
+    .flow-day-summary{margin-top:.85rem;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));padding:1rem}
+    .flow-day-summary[hidden]{display:none!important}
+    .flow-day-summary-head{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start;flex-wrap:wrap;margin-bottom:.8rem}
+    .flow-day-summary-title{font-size:1rem;font-weight:800}
+    .flow-day-summary-subtitle{font-size:.74rem;color:var(--text-secondary);margin-top:.22rem}
+    .flow-day-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.7rem;margin-bottom:.8rem}
+    .flow-day-summary-metric{background:var(--bg-secondary);border:1px solid var(--border);border-radius:14px;padding:.75rem .8rem;min-width:0}
+    .flow-day-summary-metric.is-final{border-color:rgba(88,166,255,.28);background:linear-gradient(180deg,rgba(88,166,255,.08),rgba(255,255,255,.02))}
+    .flow-day-summary-metric-label{font-size:.64rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;font-weight:800}
+    .flow-day-summary-metric-value{font-family:'JetBrains Mono',monospace;font-size:.98rem;font-weight:800;line-height:1.1;word-break:break-word}
+    .flow-day-summary-metric.is-final .flow-day-summary-metric-value{font-size:1.12rem}
+    .flow-day-summary-helper{margin-top:.28rem;font-size:.71rem;color:var(--text-secondary)}
+    .flow-day-summary-list{display:grid;gap:.38rem}
+    .flow-day-summary-item{display:flex;justify-content:space-between;gap:.75rem;padding:.6rem .7rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;font-size:.74rem}
+    .flow-day-summary-item span:first-child{color:var(--text-secondary)}
+    .flow-day-summary-empty{font-size:.74rem;color:var(--text-secondary)}
+    .flow-day-summary-note{margin-top:.28rem;font-size:.72rem;color:var(--text-secondary)}
+    .flow-row{position:relative}
+    .flow-row td{padding:.9rem .85rem;vertical-align:top}
+    .flow-row.flow-row--estavel td{background:rgba(46,160,67,.035)}
+    .flow-row.flow-row--atencao td{background:rgba(210,153,34,.06)}
+    .flow-row.flow-row--critico td{background:rgba(248,81,73,.08)}
+    .flow-row td:first-child{border-left:3px solid transparent}
+    .flow-row.flow-row--estavel td:first-child{border-left-color:rgba(46,160,67,.7)}
+    .flow-row.flow-row--atencao td:first-child{border-left-color:rgba(210,153,34,.8)}
+    .flow-row.flow-row--critico td:first-child{border-left-color:rgba(248,81,73,.9)}
+    .flow-day-cell{display:grid;gap:.4rem;min-width:150px}
+    .flow-day-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;flex-wrap:wrap}
+    .flow-day-date{font-weight:800;font-size:.94rem;line-height:1.15}
+    .flow-day-weekday{font-size:.72rem;color:var(--text-secondary);margin-top:.18rem}
+    .flow-day-note{font-size:.72rem;color:var(--text-secondary);line-height:1.35}
+    .flow-metric-card{display:grid;gap:.28rem;min-width:120px;padding:.75rem .78rem;border-radius:14px;border:1px solid var(--border);background:rgba(255,255,255,.02)}
+    .flow-metric-card.final{background:linear-gradient(180deg,rgba(88,166,255,.08),rgba(255,255,255,.015));border-color:rgba(88,166,255,.28)}
+    .flow-metric-label{font-size:.64rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;font-weight:800}
+    .flow-metric-value{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:1rem;line-height:1.1;word-break:break-word}
+    .flow-metric-card.final .flow-metric-value{font-size:1.16rem}
+    .flow-metric-helper{font-size:.7rem;color:var(--text-secondary);line-height:1.3}
+    .flow-relation{display:grid;gap:.45rem;min-width:300px}
+    .flow-relation-summary{display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.55rem .65rem;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid var(--border)}
+    .flow-relation-summary span{font-size:.72rem;color:var(--text-secondary)}
+    .flow-relation-summary strong{font-size:.74rem}
+    .detail-card{
+      border:1px solid var(--border);background:var(--bg-secondary);border-radius:12px;padding:.45rem .55rem
+    }
+    .detail-head{font-size:.62rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary);margin-bottom:.22rem}
+    .detail-item{display:flex;justify-content:space-between;gap:.5rem;font-size:.72rem;padding:.12rem 0}
+    .search-box{
+      display:flex;align-items:center;gap:.45rem;background:var(--bg-card);border:1px solid var(--border);padding:.55rem .75rem;border-radius:12px
+    }
+    .search-box input{border:none;background:transparent;padding:0}
+    .search-box input:focus{box-shadow:none}
+    .week-nav{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
+    .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.75rem;margin-bottom:1rem}
+    .day-card{
+      background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:.95rem;min-height:170px
+    }
+    .day-card.today{border-color:var(--accent-teal);box-shadow:0 0 0 1px rgba(63,185,165,.28)}
+    .day-card.negative{border-color:rgba(248,81,73,.45);background:rgba(248,81,73,.04)}
+    .day-card.weekend{background:rgba(255,255,255,.02)}
+    .day-head{display:flex;justify-content:space-between;gap:.6rem;border-bottom:1px solid var(--border);padding-bottom:.45rem;margin-bottom:.6rem}
+    .day-name{font-size:.68rem;text-transform:uppercase;color:var(--text-secondary)}
+    .day-date{font-weight:800;font-family:'JetBrains Mono',monospace}
+    .day-lines{display:grid;gap:.24rem;font-size:.76rem}
+    .day-items{margin-top:.5rem;max-height:80px;overflow:auto;font-size:.67rem;color:var(--text-secondary)}
+    .day-items div{display:flex;justify-content:space-between;gap:.5rem;padding:.08rem 0}
+    .flow-chips{display:flex;flex-wrap:wrap;gap:.35rem}
+    .flow-chip{display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .5rem;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.02);font-size:.72rem;color:var(--text-secondary)}
+    .flow-chip strong{font-size:.72rem;color:var(--text-primary)}
+    .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.8rem}
+
+    .resumo-executivo{
+      margin-bottom:1rem;
+      background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01)),var(--bg-card);
+      border:1px solid var(--border);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .resumo-toolbar{
+      display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;
+      padding:1.1rem 1.15rem 0;
+    }
+    .resumo-toolbar h2{
+      font-size:1.02rem;font-weight:800;letter-spacing:.01em;
+    }
+    .resumo-toolbar p{
+      margin-top:.22rem;font-size:.78rem;color:var(--text-secondary)
+    }
+    .resumo-grid{
+      display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:.9rem;padding:1rem 1.15rem 1.15rem;
+    }
+    .resumo-grid--mini{
+      grid-template-columns:repeat(6,minmax(0,1fr));
+      padding-top:0;
+    }
+    .resumo-card,.resumo-card-mini{
+      position:relative;
+      border:1px solid var(--border);
+      border-radius:18px;
+      background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.01));
+      overflow:hidden;
+      min-width:0;
+    }
+    .resumo-card{
+      padding:1rem 1rem .92rem;
+      min-height:132px;
+    }
+    .resumo-card-mini{
+      padding:.85rem .9rem;
+      min-height:104px;
+    }
+    .resumo-card::before,.resumo-card-mini::before{
+      content:'';position:absolute;left:0;right:0;top:0;height:4px;background:var(--border-light)
+    }
+    .resumo-card[data-tone='teal']::before,.resumo-card-mini[data-tone='teal']::before{background:var(--accent-teal)}
+    .resumo-card[data-tone='green']::before,.resumo-card-mini[data-tone='green']::before{background:var(--accent-green)}
+    .resumo-card[data-tone='yellow']::before,.resumo-card-mini[data-tone='yellow']::before{background:var(--accent-yellow)}
+    .resumo-card[data-tone='blue']::before,.resumo-card-mini[data-tone='blue']::before{background:var(--accent-blue)}
+    .resumo-card[data-tone='red']::before,.resumo-card-mini[data-tone='red']::before{background:var(--accent-red)}
+    .resumo-card[data-tone='purple']::before,.resumo-card-mini[data-tone='purple']::before{background:var(--accent-purple)}
+    .resumo-card-title,.resumo-card-mini-title{
+      font-size:.67rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.07em;font-weight:800
+    }
+    .resumo-card-value,.resumo-card-mini-value{
+      margin-top:.62rem;
+      font-family:'JetBrains Mono',monospace;
+      font-weight:800;
+      line-height:1.1;
+      letter-spacing:-.02em;
+      word-break:break-word;
+    }
+    .resumo-card-value{font-size:1.28rem}
+    .resumo-card-mini-value{font-size:1.02rem}
+    .resumo-card-helper,.resumo-card-mini-helper{
+      margin-top:.48rem;font-size:.74rem;color:var(--text-secondary)
+    }
+    .resumo-card-helper strong,.resumo-card-mini-helper strong{color:var(--text-primary)}
+    .resumo-card-status-ok{color:var(--accent-green)}
+    .resumo-card-status-warn{color:var(--accent-yellow)}
+    .resumo-card-status-danger{color:var(--accent-red)}
+    .cash-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+    .company-card{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;overflow:hidden}
+    .company-card.full-span{grid-column:1 / -1}
+    .company-head{padding:1rem;border-bottom:1px solid var(--border);background:var(--bg-secondary)}
+    .company-head h3{font-size:1rem;font-weight:800}
+    .company-head .headline-positive{color:var(--accent-green);font-weight:800}
+    .company-head .headline-negative{color:var(--accent-red);font-weight:800}
+    .account-list{padding:1rem;display:grid;gap:.75rem}
+    .account-card{
+      background:var(--bg-secondary);border:1px solid var(--border);border-radius:14px;padding:.9rem;
+      display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:.8rem;align-items:end
+    }
+    .account-name{font-weight:800}
+    .account-meta{font-size:.72rem;color:var(--text-secondary)}
+    .account-value{font-family:'JetBrains Mono',monospace;font-weight:800}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+    .chart-panel canvas{
+      width:100%;height:360px;display:block;background:linear-gradient(180deg,rgba(255,255,255,.01),transparent);border-radius:14px
+    }
+    .chart-panel .panel-header{align-items:flex-start;gap:.9rem}
+    .chart-panel .panel-header > div:first-child{flex:1 1 320px;min-width:0}
+    .chart-panel .panel-body{padding-top:.85rem}
+    .chart-wrap{
+      position:relative;overflow:hidden;padding:.8rem;border:1px solid var(--border);
+      border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01))
+    }
+    .legend{
+      display:flex;gap:.7rem;flex-wrap:wrap;font-size:.74rem;color:var(--text-secondary)
+    }
+    .legend span{display:inline-flex;align-items:center;gap:.35rem}
+    .legend i{width:11px;height:11px;border-radius:999px;display:inline-block}
+    .modal-overlay,.login-screen{
+      position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(9px);
+      display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;
+    }
+    .modal-overlay.active,.login-screen.active{display:flex}
+    .modal{
+      width:min(560px,100%);max-height:90vh;overflow:auto;
+      background:var(--bg-card);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow)
+    }
+    .modal-header{padding:1.1rem 1.2rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:.8rem;align-items:center}
+    .modal-header h2{font-size:1rem;font-weight:800}
+    .modal-body{padding:1.2rem}
+    .modal-footer{padding:1rem 1.2rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:.6rem;flex-wrap:wrap}
+    .modal-close{background:none;border:none;color:var(--text-secondary);font-size:1.4rem;cursor:pointer}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem}
+    .form-group{display:grid;gap:.38rem}
+    .form-group label{font-size:.75rem;font-weight:700;color:var(--text-secondary)}
+    .helper{font-size:.72rem;color:var(--text-secondary)}
+    .info-box{
+      background:var(--bg-secondary);border:1px solid var(--border);border-radius:14px;padding:.8rem;margin-bottom:.75rem
+    }
+    .info-box .label{font-size:.7rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em}
+    .info-box .value{margin-top:.2rem}
+    .footer{
+      border-top:1px solid var(--border);background:var(--bg-secondary);padding:1rem 0;margin-top:auto
+    }
+    .footer-inner{text-align:center;font-size:.78rem;color:var(--text-muted)}
+    .footer-inner span{color:var(--accent-teal);font-weight:800}
+    .toast-container{
+      position:fixed;right:1rem;bottom:1rem;z-index:1200;display:grid;gap:.55rem
+    }
+    .toast{
+      background:var(--bg-card);border:1px solid var(--border);border-left:4px solid var(--accent-teal);
+      color:var(--text-primary);padding:.82rem 1rem;border-radius:14px;box-shadow:var(--shadow);font-size:.82rem;display:flex;gap:.55rem;align-items:flex-start;
+      animation:show .2s ease;
+      max-width:min(420px,calc(100vw - 2rem));
+    }
+    .toast.error{border-left-color:var(--accent-red)}
+    .toast.warning{border-left-color:var(--accent-yellow)}
+    .toast.success{border-left-color:var(--accent-green)}
+    @keyframes show{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .login-screen{
+      padding:1rem;
+      overflow:auto;
+      align-items:center;
+      background:
+        radial-gradient(circle at top left, rgba(63,185,165,.10), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(88,166,255,.08), transparent 26%),
+        #0a0f17;
+    }
+    .login-shell{
+      width:min(460px,100%);
+      min-height:min(720px,100%);
+      display:grid;
+      grid-template-columns:minmax(0,1fr);
+      gap:0;
+      align-items:center;
+      margin:0 auto;
+    }
+    .login-card,
+    .login-side{
+      min-width:0;
+      width:100%;
+      position:relative;
+      border-radius:24px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow:0 24px 60px rgba(0,0,0,.32);
+    }
+    .login-card{
+      padding:1.5rem;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:1.2rem;
+      background:linear-gradient(180deg,rgba(17,24,39,.98),rgba(12,18,28,.98));
+    }
+    .login-side{
+      padding:1.35rem;
+      display:grid;
+      gap:1rem;
+      align-content:space-between;
+      background:linear-gradient(180deg,rgba(16,22,34,.98),rgba(12,18,28,.98));
+    }
+    .login-badge,
+    .login-kicker{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:max-content;
+      max-width:100%;
+      min-height:32px;
+      padding:.42rem .82rem;
+      border-radius:999px;
+      font-size:.72rem;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      background:rgba(63,185,165,.10);
+      border:1px solid rgba(63,185,165,.24);
+      color:#46d9c6;
+    }
+    .login-copy{display:grid;gap:.7rem}
+    .login-copy h2{
+      font-size:clamp(1.75rem,2.1vw,2.35rem);
+      font-weight:800;
+      line-height:1.08;
+      margin:0;
+      text-wrap:balance;
+    }
+    .login-card p,
+    .login-side p{
+      color:#98a2b3;
+      margin:0;
+      font-size:.96rem;
+      line-height:1.55;
+    }
+    .login-form{
+      display:grid;
+      gap:.9rem;
+      margin-top:.15rem;
+    }
+    .login-form .form-group{gap:.45rem}
+    .login-form .form-group label{
+      font-size:.86rem;
+      font-weight:700;
+      color:#c2c8d3;
+    }
+    .login-form input{
+      min-width:0;
+      max-width:100%;
+      height:52px;
+      border-radius:14px;
+      padding:.92rem 1rem;
+      background:#0b1220;
+      border:1px solid rgba(255,255,255,.10);
+      color:#f3f4f6;
+      font-size:.97rem;
+    }
+    .login-form input::placeholder{color:#667085}
+    .login-form-actions{display:grid;gap:.7rem;margin-top:.2rem}
+    .login-form-actions .btn{
+      width:100%;
+      min-height:48px;
+      border-radius:14px;
+      font-size:.98rem;
+      font-weight:800;
+      background:linear-gradient(135deg,#2ea043,#3fb9a5);
+      border:none;
+      box-shadow:none;
+    }
+    .login-note{
+      font-size:.84rem;
+      color:#8b94a5;
+      line-height:1.5;
+    }
+    .login-side-top{display:grid;gap:1rem}
+    .login-side h3{
+      font-size:clamp(1.8rem,2.8vw,2.8rem);
+      line-height:1.08;
+      font-weight:800;
+      margin:0;
+      max-width:15ch;
+      text-wrap:balance;
+      color:#f7fafc;
+    }
+    .login-visual{
+      display:grid;
+      gap:.9rem;
+      padding:1rem;
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+    }
+    .login-visual-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:1rem;
+      flex-wrap:wrap;
+    }
+    .login-visual-title{
+      font-size:.84rem;
+      color:#dce3ec;
+      font-weight:800;
+    }
+    .login-visual-subtitle{
+      font-size:.74rem;
+      color:#98a2b3;
+      margin-top:.2rem;
+    }
+    .login-visual-badge{
+      display:inline-flex;
+      align-items:center;
+      padding:.34rem .62rem;
+      border-radius:999px;
+      background:rgba(46,160,67,.12);
+      border:1px solid rgba(46,160,67,.24);
+      color:#8de2a0;
+      font-size:.7rem;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+    }
+    .login-visual-kpis{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:.75rem;
+    }
+    .login-visual-kpi{
+      padding:.9rem;
+      border-radius:16px;
+      background:#0d1522;
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .login-visual-kpi span{
+      display:block;
+      font-size:.68rem;
+      color:#98a2b3;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      margin-bottom:.4rem;
+      font-weight:800;
+    }
+    .login-visual-kpi strong{
+      display:block;
+      font-family:'JetBrains Mono',monospace;
+      font-size:1rem;
+      line-height:1.2;
+      color:#f8fafc;
+    }
+    .login-visual-chart{
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      align-items:end;
+      gap:.45rem;
+      min-height:160px;
+      padding:.85rem;
+      border-radius:18px;
+      background:#0b1220;
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .login-bar{
+      border-radius:999px 999px 10px 10px;
+      background:linear-gradient(180deg,rgba(63,185,165,.95),rgba(88,166,255,.55));
+      min-height:34px;
+    }
+    .login-bar.alt{
+      background:linear-gradient(180deg,rgba(88,166,255,.95),rgba(63,185,165,.45));
+    }
+    .login-info-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:.75rem;
+    }
+    .login-info-card{
+      padding:.95rem 1rem;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.03);
+    }
+    .login-info-card strong{
+      display:block;
+      font-size:.9rem;
+      color:#f3f6fb;
+      margin-bottom:.3rem;
+    }
+    .login-info-card .small{
+      color:#b4becc;
+      font-size:.82rem;
+      line-height:1.45;
+      margin-top:0;
+    }
+    .mobile-card-list{display:none}
+    .small{font-size:.74rem}
+    .sr-only{position:absolute;left:-9999px}
+    .divider{height:1px;background:var(--border);margin:.85rem 0}
+    /* ponto do estado inicial minimizado do Fluxo Diário */
+    .panel-collapsible .panel-header{cursor:pointer}
+    .panel-toggle{margin-left:auto;display:inline-flex;align-items:center;gap:.45rem;background:transparent;border:1px solid var(--border);color:var(--text-primary);border-radius:10px;padding:.45rem .7rem;font-size:.74rem;font-weight:800;cursor:pointer;flex-shrink:0}
+    .panel-toggle .panel-toggle-icon{display:inline-block;transition:transform .18s ease}
+    .panel-collapsible.is-collapsed .panel-toggle .panel-toggle-icon{transform:rotate(-90deg)}
+    .panel-collapsible.is-collapsed .panel-body{display:none}
+    /* ponto da remoção/ocultação da duplicidade */
+    .kpi-grid{display:none!important}
+    @media (max-width:1220px){
+      .dashboard-grid,.cash-grid{grid-template-columns:1fr}
+      .dashboard-grid > :first-child,.dashboard-grid > :last-child{order:initial}
+      .resumo-grid,.resumo-grid--mini{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .projecao-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media (max-width:980px){
+      .week-grid{grid-template-columns:repeat(2,1fr)}
+      .account-card{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width:820px){
+      .header{padding:.9rem}
+      .resumo-toolbar{padding:1rem 1rem 0}
+      .resumo-grid{padding-left:1rem;padding-right:1rem;padding-bottom:1rem}
+      .projecao-strip{grid-template-columns:1fr 1fr}
+      .painel-insights{grid-template-columns:1fr}
+      .resumo-grid:not(.resumo-grid--mini){grid-template-columns:1fr}
+      .resumo-grid--mini,.resumo-grid-mini{grid-template-columns:repeat(2,minmax(0,1fr));padding-left:1rem;padding-right:1rem;padding-bottom:1rem}
+      .header-content,.tabs-container,.main-content,.footer-inner{width:min(100%,calc(100% - 1rem))}
+      .header-actions{width:100%}
+      .config-group{width:100%;justify-content:space-between}
+      .toolbar{align-items:stretch}
+      .toolbar-left,.toolbar-right{width:100%}
+      .toolbar-right--top{justify-content:flex-start}
+      #tab-lancamentos .toolbar-right{align-items:flex-start;gap:.7rem}
+      #tab-lancamentos .toolbar-actions{flex-wrap:wrap}
+      .pill-group,.search-box{width:100%}
+      .form-grid{grid-template-columns:1fr}
+    }
+    @media (max-width:920px){
+      .login-screen{
+        padding:.75rem;
+        align-items:center;
+        justify-content:center;
+        min-height:100dvh;
+      }
+      .login-shell{
+        grid-template-columns:1fr;
+        min-height:0;
+      }
+      .login-card{
+        order:1;
+        padding:1.15rem 1rem 1.1rem;
+      }
+      .login-side{
+        order:2;
+        padding:1.05rem 1rem 1.1rem;
+      }
+      .login-side h3,
+      .login-side p{
+        max-width:none;
+      }
+      .login-visual-kpis,
+      .login-info-grid{
+        grid-template-columns:1fr 1fr;
+      }
+    }
+    @media (max-width:700px){
+      .week-grid{grid-template-columns:1fr}
+      .pendencia-filters,.pendencia-summary,.pendencia-base-grid{grid-template-columns:1fr}
+      table{min-width:760px}
+      .tabs{padding-bottom:.15rem}
+      .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .panel,.kpi-card,.company-card,.login-card,.modal{border-radius:18px}
+      .account-card{grid-template-columns:1fr}
+      /* ponto do ajuste mobile do dashboard */
+      .chart-panel .panel-header{align-items:flex-start}
+      .chart-panel .panel-title{font-size:.9rem;line-height:1.3}
+      .chart-panel .panel-subtitle{font-size:.72rem;line-height:1.4}
+      .chart-wrap{padding:.6rem}
+      .chart-panel canvas{height:260px}
+      .legend{display:grid;grid-template-columns:1fr;gap:.45rem;width:100%}
+      .legend span{display:grid;grid-template-columns:11px 1fr;align-items:start;white-space:normal}
+      .resumo-grid--mini,.resumo-grid-mini{display:none!important}
+      .projecao-strip{grid-template-columns:1fr}
+      .flow-day-summary-grid{grid-template-columns:1fr}
+    }
+    @media (max-width:520px){
+      .kpi-grid{grid-template-columns:1fr}
+      .resumo-grid,.resumo-grid--mini,.resumo-grid-mini{grid-template-columns:1fr}
+      .btn{width:100%}
+      .toolbar-right .btn,.action-group .btn{width:auto}
+      .config-group input[type="text"],.config-group input[type="date"],.config-group input[type="time"]{width:100%}
+      .login-screen{padding:.5rem;align-items:center;justify-content:center;min-height:100dvh}
+      .login-card,.login-side{padding:.95rem}
+      .login-copy h2{font-size:1.42rem}
+      .login-side h3{font-size:1.72rem}
+      .login-badge,.login-kicker{max-width:none}
+      .login-visual-kpis,.login-info-grid{grid-template-columns:1fr}
+      .login-note{font-size:.82rem}
+    }
+  </style>
+</head>
+<body>
+  <div class="login-screen active" id="loginScreen">
+    <div class="login-shell">
+      <section class="login-card" aria-label="Acesso ao sistema">
+        <div class="login-copy">
+          <div class="login-badge">Acesso ao sistema</div>
+          <h2>Entrar na plataforma</h2>
+          <p>Faça login para acessar a visão gerencial do caixa, acompanhar projeções e consultar o comportamento financeiro do período.</p>
+        </div>
+        <form class="login-form" id="loginForm" novalidate autocomplete="off">
+          <div class="form-group">
+            <label for="loginEmail">E-mail</label>
+            <input type="email" id="loginEmail" inputmode="email" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="seuemail@empresa.com.br">
+          </div>
+          <div class="form-group">
+            <label for="loginSenha">Senha</label>
+            <input type="password" id="loginSenha" autocomplete="off" placeholder="Digite sua senha">
+          </div>
+          <div class="login-form-actions">
+            <button class="btn btn-primary" type="submit" id="btnEntrar">Entrar</button>
+            <p class="login-note">O acesso fica válido apenas nesta sessão. Ao recarregar, fechar a aba ou reabrir o arquivo, será necessário entrar novamente.</p>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <h1>Fluxo de Caixa</h1>
+      </div>
+      <div class="header-actions header-actions--hidden" id="headerActions" aria-hidden="true">
+        <input type="text" id="saldoAtual" oninput="formatarMoeda(this)" data-admin-only="true">
+        <input type="date" id="dataBaseVisual" disabled>
+        <input type="time" id="horaAtualizacao" step="60" inputmode="numeric" pattern="[0-9]{2}:[0-9]{2}" data-admin-only="true">
+        <span id="empresaVisaoLabel" hidden>Ambas</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="tabs-container">
+    <div class="tabs" id="mainTabs">
+      <button class="tab active" data-tab="dashboard">Dashboard</button>
+      <button class="tab" data-tab="semana">Visão Semanal</button>
+      <button class="tab" data-tab="caixa">Visão de Caixa</button>
+      <button class="tab" data-tab="lancamentos">Lançamentos</button>
+      <button class="tab" data-tab="emergenciais">Emergenciais</button>
+    </div>
+  </div>
+
+  <main class="main-content mobile-stable" id="appRoot">
+    <section class="tab-content active" id="tab-dashboard">
+      <div class="toolbar toolbar--dashboard-top">
+        <div class="toolbar-left">
+          <div class="pill-group" id="companyViewGroup">
+            <button class="pill active accent" data-company-view="ambas">🧩 Ambas</button>
+            <button class="pill" data-company-view="malut-pneus">🛞 Malut Pneus</button>
+            <button class="pill" data-company-view="malut-ferragens">🏭 Malut Ferragens</button>
+          </div>
+          <div class="pill-group" id="periodFilterGroup">
+            <button class="pill active accent" data-range="7d">7d</button>
+            <button class="pill" data-range="15d">15d</button>
+            <button class="pill" data-range="30d">30d</button>
+            <button class="pill" data-range="custom">Personalizado</button>
+            <button class="pill" data-range="vencidas">Vencidas</button>
+          </div>
+          <div class="inline-fields" id="customRangeFields" hidden>
+            <div class="field">
+              <input type="date" id="customStart">
+            </div>
+            <div class="field">
+              <input type="date" id="customEnd">
+            </div>
+            <button class="btn btn-secondary btn-small" onclick="aplicarFiltroPersonalizado()">Aplicar</button>
+          </div>
+        </div>
+        <div class="toolbar-right toolbar-right--top toolbar-right--top-clean">
+          <div class="profile-badge">
+            <span>👤</span>
+            <div>
+              <div class="small muted">Perfil logado</div>
+              <strong id="perfilLogadoLabel">-</strong>
+            </div>
+          </div>
+          <div class="toolbar-actions toolbar-actions--discreet toolbar-actions--logout-end">
+            <button class="btn btn-ghost-discreet btn-icon-only" id="btnSair" onclick="logout()" aria-label="Sair" title="Sair">⎋</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="entity-highlight">
+        <strong id="lancamentoEmpresaDestaque">Visualização atual: AMBAS AS EMPRESAS</strong>
+      </div>
+
+      <section class="resumo-executivo" aria-label="Resumo Executivo">
+        <div class="resumo-toolbar">
+          <div>
+            <h2>Resumo Executivo</h2>
+            <p>Resumo financeiro objetivo para leitura do cliente.</p>
+          </div>
+        </div>
+
+        <div class="resumo-grid">
+          <article class="resumo-card" data-tone="teal">
+            <div class="resumo-card-title">Saldo Bancário Atual</div>
+            <div class="resumo-card-value" id="resumoSaldoBancarioAtual">R$ 0,00</div>
+            <div class="resumo-card-helper" id="resumoSaldoBancarioAtualHelper">-</div>
+          </article>
+          <article class="resumo-card" data-tone="green">
+            <div class="resumo-card-title">Entradas Previstas</div>
+            <div class="resumo-card-value" id="resumoEntradasPrevistas">R$ 0,00</div>
+            <div class="resumo-card-helper" id="resumoEntradasPrevistasHelper">0 lançamento(s)</div>
+          </article>
+          <article class="resumo-card" data-tone="yellow">
+            <div class="resumo-card-title">Saídas Previstas</div>
+            <div class="resumo-card-value" id="resumoSaidasPrevistas">R$ 0,00</div>
+            <div class="resumo-card-helper" id="resumoSaidasPrevistasHelper">0 lançamento(s)</div>
+          </article>
+          <article class="resumo-card" data-tone="blue">
+            <div class="resumo-card-title">Saldo Projetado Final</div>
+            <div class="resumo-card-value" id="resumoSaldoProjetadoFinal">R$ 0,00</div>
+            <div class="resumo-card-helper" id="resumoSaldoProjetadoFinalHelper">Hoje até +7 dias</div>
+          </article>
+          <article class="resumo-card" data-tone="red">
+            <div class="resumo-card-title">Total Vencido</div>
+            <div class="resumo-card-value" id="resumoTotalVencido">R$ 0,00</div>
+            <div class="resumo-card-helper" id="resumoTotalVencidoHelper">0 pendência(s)</div>
+          </article>
+          <article class="resumo-card" data-tone="purple">
+            <div class="resumo-card-title">Necessidade de Caixa</div>
+            <div class="resumo-card-value" id="resumoNecessidadeCaixa">Cobertura confortável</div>
+            <div class="resumo-card-helper" id="resumoNecessidadeCaixaHelper">Leitura automática com base no saldo projetado final.</div>
+          </article>
+        </div>
+      </section>
+
+      <div class="kpi-grid">
+        <div class="kpi-card teal">
+          <div class="kpi-label">Saldo Atual</div>
+          <div class="kpi-value" id="kpiSaldoAtual">R$ 0,00</div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-label">Vencidas</div>
+          <div class="kpi-value" id="kpiVencidas">R$ 0,00</div>
+        </div>
+        <div class="kpi-card yellow">
+          <div class="kpi-label">Saídas do Período</div>
+          <div class="kpi-value" id="kpiSaidasPeriodo">R$ 0,00</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-label">Entradas do Período</div>
+          <div class="kpi-value" id="kpiEntradasPeriodo">R$ 0,00</div>
+        </div>
+        <div class="kpi-card purple">
+          <div class="kpi-label">Provisionadas</div>
+          <div class="kpi-value" id="kpiProvisionadas">R$ 0,00</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-label">Saldo Projetado</div>
+          <div class="kpi-value" id="kpiSaldoProjetado">R$ 0,00</div>
+        </div>
+      </div>
+
+      <section class="projecao-strip" aria-label="Leituras gerenciais do fluxo de caixa">
+        <article class="projecao-card" data-tone="teal">
+          <div class="projecao-label">Hoje no caixa</div>
+          <div class="projecao-value" id="projSaldoHoje">R$ 0,00</div>
+          <div class="projecao-helper" id="projSaldoHojeHelper">Saldo de partida da projeção.</div>
+        </article>
+        <article class="projecao-card" data-tone="blue">
+          <div class="projecao-label">Menor saldo projetado</div>
+          <div class="projecao-value" id="projMenorSaldo">R$ 0,00</div>
+          <div class="projecao-helper" id="projMenorSaldoHelper">Sem leitura ainda.</div>
+        </article>
+        <article class="projecao-card" data-tone="yellow">
+          <div class="projecao-label">Maior pressão de saída</div>
+          <div class="projecao-value" id="projMaiorSaida">R$ 0,00</div>
+          <div class="projecao-helper" id="projMaiorSaidaHelper">Sem saídas no período.</div>
+        </article>
+        <article class="projecao-card" data-tone="red">
+          <div class="projecao-label">Dia crítico do período</div>
+          <div class="projecao-value" id="projDiaCritico">Sem risco</div>
+          <div class="projecao-helper" id="projDiaCriticoHelper">Nenhum aperto identificado.</div>
+        </article>
+      </section>
+
+      <div class="dashboard-grid">
+        <div class="panel panel-collapsible is-collapsed" id="painelPendencias">
+          <div class="panel-header" role="button" tabindex="0" aria-expanded="false" aria-controls="painelPendenciasBody" onclick="togglePainelPendencias(event)" onkeydown="handleTogglePainelPendencias(event)">
+            <div>
+              <div class="panel-title">Vencidas e a Vencer <span class="badge" id="badgePendencias">0</span></div>
+              <div class="panel-subtitle">Apuração em tempo real por prioridade, filtros e totalização dos lançamentos selecionados.</div>
+            </div>
+            <div class="pill-group" id="priorityFilterGroup">
+              <button class="pill active accent" data-priority="todas">Todas</button>
+              <button class="pill" data-priority="critico">Crítico</button>
+              <button class="pill" data-priority="alto">Alto</button>
+              <button class="pill" data-priority="medio">Médio</button>
+              <button class="pill" data-priority="baixo">Baixo</button>
+              <button class="pill" data-priority="aclassificar">A Classificar</button>
+            </div>
+            <button type="button" class="panel-toggle" aria-label="Expandir ou recolher Vencidas e a Vencer" tabindex="-1">
+              <span class="panel-toggle-icon">▾</span>
+              <span class="panel-toggle-label">Expandir</span>
+            </button>
+          </div>
+          <div class="panel-body" id="painelPendenciasBody">
+            <div class="pendencia-filters">
+              <div class="field">
+                <label for="pendenciaCompetenciaFiltro">Competência</label>
+                <input type="month" id="pendenciaCompetenciaFiltro">
+              </div>
+              <div class="field">
+                <label for="pendenciaNomeFiltro">Nome</label>
+                <input type="text" id="pendenciaNomeFiltro" placeholder="Pesquisar por descrição">
+              </div>
+              <div class="field">
+                <label for="pendenciaValorFiltro">Valor</label>
+                <input type="text" id="pendenciaValorFiltro" inputmode="decimal" placeholder="R$ 0,00">
+              </div>
+            </div>
+            <div class="pendencia-toolbar">
+              <label class="check-inline">
+                <input type="checkbox" id="selecionarTodasPendencias">
+                <span>Selecionar todos os visíveis</span>
+              </label>
+              <button type="button" class="btn btn-secondary btn-small" id="limparSelecaoPendencias">Desmarcar todos</button>
+            </div>
+            <div class="pendencia-summary">
+              <div class="pendencia-summary-card">
+                <div class="pendencia-summary-label">Quantidade filtrada</div>
+                <div class="pendencia-summary-value" id="pendenciasQtdFiltrada">0 lançamento(s)</div>
+              </div>
+              <div class="pendencia-summary-card">
+                <div class="pendencia-summary-label">Valor total filtrado</div>
+                <div class="pendencia-summary-value" id="pendenciasValorFiltrado">R$ 0,00</div>
+              </div>
+              <div class="pendencia-summary-card">
+                <div class="pendencia-summary-label">Selecionados</div>
+                <div class="pendencia-summary-value" id="pendenciasQtdSelecionada">0 lançamento(s)</div>
+              </div>
+              <div class="pendencia-summary-card">
+                <div class="pendencia-summary-label">Total selecionado</div>
+                <div class="pendencia-summary-value" id="pendenciasValorSelecionado">R$ 0,00</div>
+              </div>
+            </div>
+            <div class="pendencia-bases" id="pendenciasResumoBases"></div>
+            <div id="listaPendencias"></div>
+          </div>
+        </div>
+
+        <div style="display:grid;gap:1rem">
+          <div class="panel chart-panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Dashboard do Fluxo de Caixa</div>
+                <div class="panel-subtitle" id="chartSubtitle">Leitura clara do previsto, do provisionado, do realizado e do impacto final no caixa.</div>
+              </div>
+              <div class="legend">
+                <span><i style="background:#3fb9a5"></i>Entradas provisionais</span>
+                <span><i style="background:#2ea043"></i>Entradas realizadas</span>
+                <span><i style="background:#d29922"></i>Saídas provisionais</span>
+                <span><i style="background:#f85149"></i>Saídas realizadas</span>
+                <span><i style="background:#58a6ff"></i>Consolidado futuro</span>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="chart-wrap">
+                <canvas id="fluxoChart" height="360"></canvas>
+                <div class="chart-tooltip" id="chartTooltip"></div>
+              </div>
+              <div class="painel-insights">
+                <div class="insight-card">
+                  <div class="insight-title">Leitura do fechamento</div>
+                  <div class="insight-value" id="insightFechamento">Saldo projetado sem leitura.</div>
+                  <div class="insight-helper" id="insightFechamentoHelper">Aguardando apuração.</div>
+                </div>
+                <div class="insight-card">
+                  <div class="insight-title">Ponto de atenção</div>
+                  <div class="insight-value" id="insightAtencao">Sem alertas relevantes.</div>
+                  <div class="insight-helper" id="insightAtencaoHelper">O fluxo será analisado automaticamente.</div>
+                </div>
+              </div>
+              <div class="flow-day-summary" id="flowDaySummary" hidden>
+                <div class="flow-day-summary-head">
+                  <div>
+                    <div class="flow-day-summary-title" id="flowDaySummaryTitle">Resumo do dia</div>
+                    <div class="flow-day-summary-subtitle" id="flowDaySummarySubtitle">Clique em uma bolinha do gráfico para detalhar entradas x saídas.</div>
+                  </div>
+                  <div class="risk-badge-inline estavel" id="flowDaySummaryRisk">Sem leitura</div>
+                </div>
+                <div class="flow-day-summary-grid">
+                  <div class="flow-day-summary-metric">
+                    <div class="flow-day-summary-metric-label">Saldo inicial</div>
+                    <div class="flow-day-summary-metric-value" id="flowDaySummarySaldoInicial">R$ 0,00</div>
+                    <div class="flow-day-summary-helper">Ponto de partida do dia.</div>
+                  </div>
+                  <div class="flow-day-summary-metric">
+                    <div class="flow-day-summary-metric-label">Entradas</div>
+                    <div class="flow-day-summary-metric-value entrada" id="flowDaySummaryEntradas">R$ 0,00</div>
+                    <div class="flow-day-summary-helper">Leitura consolidada do previsto, provisionado e realizado.</div>
+                  </div>
+                  <div class="flow-day-summary-metric">
+                    <div class="flow-day-summary-metric-label">Saídas</div>
+                    <div class="flow-day-summary-metric-value saida" id="flowDaySummarySaidas">R$ 0,00</div>
+                    <div class="flow-day-summary-helper">Pressão do caixa no dia.</div>
+                  </div>
+                  <div class="flow-day-summary-metric is-final">
+                    <div class="flow-day-summary-metric-label">Saldo final</div>
+                    <div class="flow-day-summary-metric-value" id="flowDaySummarySaldo">R$ 0,00</div>
+                    <div class="flow-day-summary-helper" id="flowDaySummaryStatusText">Fechamento projetado do dia.</div>
+                  </div>
+                </div>
+                <div class="flow-day-summary-list" id="flowDaySummaryList"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-collapsible is-collapsed" id="painelFluxoDiario">
+            <div class="panel-header" role="button" tabindex="0" aria-expanded="false" aria-controls="painelFluxoDiarioBody" onclick="togglePainelFluxoDiario(event)" onkeydown="handleTogglePainelFluxoDiario(event)">
+              <div>
+                <div class="panel-title">Fluxo Diário</div>
+                <div class="panel-subtitle">Leitura diária com saldo inicial/final e relação detalhada de entradas x saídas por dia.</div>
+              </div>
+              <button type="button" class="panel-toggle" aria-label="Expandir ou recolher Fluxo Diário" tabindex="-1">
+                <span class="panel-toggle-icon">▾</span>
+                <span class="panel-toggle-label">Expandir</span>
+              </button>
+            </div>
+            <div class="panel-body" id="painelFluxoDiarioBody" style="padding:0">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Saldo Inicial</th>
+                      <th>Entradas</th>
+                      <th>Saídas</th>
+                      <th>Saldo Final</th>
+                      <th>Relação diária de entradas x saídas</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabelaFluxo"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-content" id="tab-lancamentos">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-box">
+            <span>🔎</span>
+            <input id="searchLancamentos" type="text" placeholder="Buscar por descrição, fonte ou empresa...">
+          </div>
+          <div class="pill-group" id="launchTypeGroup">
+            <button class="pill active accent" data-launch-filter="todos">Todos</button>
+            <button class="pill" data-launch-filter="despesas">Despesas</button>
+            <button class="pill" data-launch-filter="receitas">Receitas</button>
+            <button class="pill" data-launch-filter="pendentes">Em aberto</button>
+            <button class="pill" data-launch-filter="finalizados">Finalizados</button>
+          </div>
+        </div>
+        <div class="toolbar-right">
+          <div class="helper">Cliente visualiza tudo em modo somente leitura.</div>
+          <div class="toolbar-actions admin-only">
+            <button class="btn btn-primary" onclick="abrirModalLancamento('despesa')">+ Nova Despesa</button>
+            <button class="btn btn-secondary" onclick="abrirModalLancamento('receita')">+ Nova Receita</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-body" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Empresa</th>
+                  <th>Tipo</th>
+                  <th>Descrição</th>
+                  <th>Valor</th>
+                  <th>Data</th>
+                  <th>Status</th>
+                  <th>Prioridade</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaLancamentos"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-content" id="tab-emergenciais">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div>
+            <div class="panel-title">Despesas Emergenciais</div>
+            <div class="panel-subtitle">Controle de despesas emergenciais por competência, com leitura de valor gasto e quantidade.</div>
+          </div>
+        </div>
+        <div class="toolbar-right">
+          <div class="field" style="min-width:220px">
+            <label class="small muted" for="emergCompetencia">Competência</label>
+            <select id="emergCompetencia"></select>
+          </div>
+          <div class="toolbar-actions admin-only">
+            <button class="btn btn-primary" onclick="abrirModalEmergencial()">+ Nova Emergencial</button>
+          </div>
+        </div>
+      </div>
+      <div class="summary-grid" id="emergenciaisResumo"></div>
+      <div class="panel">
+        <div class="panel-body" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Empresa</th>
+                  <th>Descrição</th>
+                  <th>Valor</th>
+                  <th>Data</th>
+                  <th>Status</th>
+                  <th>Competência</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaEmergenciais"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-content" id="tab-semana">
+      <div class="week-nav">
+        <button class="btn btn-secondary" onclick="navegarSemana(-1)">← Semana anterior</button>
+        <div>
+          <div class="panel-title" id="semanaAtual">Semana atual</div>
+          <div class="panel-subtitle">Visão semanal por fluxo diário.</div>
+        </div>
+        <button class="btn btn-secondary" onclick="navegarSemana(1)">Próxima semana →</button>
+      </div>
+      <div class="week-grid" id="semanaGrid"></div>
+      <div class="summary-grid" id="semanaResumo"></div>
+    </section>
+
+    <section class="tab-content" id="tab-caixa">
+      <div class="cash-grid" id="caixaGrid"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      Desenvolvido por <span>Mais Contabilidade &amp; Soluções Empresariais</span>
+    </div>
+  </footer>
+
+  <div class="modal-overlay" id="modalLancamento">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalLancamentoTitulo">Novo Lançamento</h2>
+        <button class="modal-close" onclick="fecharModal('modalLancamento')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="lancId">
+        <input type="hidden" id="lancTipo">
+        <input type="hidden" id="lancOrigem" value="lancamentos">
+        <div class="entity-highlight">
+          <strong id="empresaSelecionadaTexto">Você está lançando em: MALUT PNEUS</strong>
+          <div class="small muted">Confira a empresa antes de salvar para evitar erro operacional.</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="lancEmpresa">Empresa *</label>
+            <select id="lancEmpresa" onchange="atualizarDestaqueEmpresaFormulario()">
+              <option value="malut-pneus">Malut Pneus</option>
+              <option value="malut-ferragens">Malut Ferragens</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="lancDescricao">Descrição / Fornecedor *</label>
+            <input type="text" id="lancDescricao" placeholder="Ex.: Stone, Bling, aluguel">
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="lancValor">Valor *</label>
+            <input type="text" id="lancValor" oninput="formatarMoeda(this)" placeholder="0,00">
+          </div>
+          <div class="form-group">
+            <label for="lancData">Data *</label>
+            <input type="date" id="lancData">
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group" id="lancStatusGroup">
+            <label for="lancStatus">Status *</label>
+            <select id="lancStatus"></select>
+          </div>
+          <div class="form-group" id="lancPrioridadeGroup">
+            <label for="lancPrioridade">Prioridade</label>
+            <select id="lancPrioridade">
+              <option value="critico">Crítico</option>
+              <option value="alto">Alto</option>
+              <option value="medio" selected>Médio</option>
+              <option value="baixo">Baixo</option>
+              <option value="aclassificar">A Classificar</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="lancDataEfetiva">Data efetiva / provisão</label>
+            <input type="date" id="lancDataEfetiva">
+          </div>
+          <div class="form-group">
+            <label for="lancObservacao">Observação</label>
+            <input type="text" id="lancObservacao" placeholder="Opcional">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="fecharModal('modalLancamento')">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarLancamento()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalPagamento">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalPagamentoTitulo">Confirmar ação</h2>
+        <button class="modal-close" onclick="fecharModal('modalPagamento')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="info-box">
+          <div class="label">Lançamento</div>
+          <div class="value" id="acaoDescricao">-</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="acaoData">Data *</label>
+            <input type="date" id="acaoData">
+          </div>
+          <div class="form-group">
+            <label for="acaoValor">Valor (R$) *</label>
+            <input type="text" id="acaoValor" oninput="formatarMoeda(this)">
+          </div>
+        </div>
+        <div class="helper" id="acaoHelper">Informe a data e o valor para concluir a ação.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="fecharModal('modalPagamento')">Cancelar</button>
+        <button class="btn btn-success" onclick="confirmarAcaoLancamento()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalSenha">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Validação obrigatória</h2>
+        <button class="modal-close" onclick="fecharModal('modalSenha')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="info-box">
+          <div class="label">Ação crítica</div>
+          <div class="value" id="senhaAcaoDescricao">Editar ou excluir lançamento finalizado</div>
+        </div>
+        <div class="form-group">
+          <label for="senhaProtecao">Senha de autorização</label>
+          <input type="password" id="senhaProtecao" placeholder="Digite a senha">
+        </div>
+        <div class="helper">Para editar ou excluir lançamentos finalizados, informe a senha de proteção.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="fecharModal('modalSenha')">Cancelar</button>
+        <button class="btn btn-primary" onclick="validarSenhaProtecao()">Validar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics-compat.js"></script>
+  <script>
+    const STORAGE_KEY = 'fluxoCaixaMalutV4';
+    const AUTH_KEY = 'fluxoCaixaMalutAuth';
+    const FIREBASE_STATE_COLLECTION = 'apps';
+    const FIREBASE_STATE_DOC = 'fluxo-caixa-gerencial';
+    const firebaseConfig = {
+      apiKey: "AIzaSyCjos87xRKcla6rh82sc8STOyw1wMJfdzQ",
+      authDomain: "fluxo-caixa-gerencial.firebaseapp.com",
+      projectId: "fluxo-caixa-gerencial",
+      storageBucket: "fluxo-caixa-gerencial.firebasestorage.app",
+      messagingSenderId: "490642020300",
+      appId: "1:490642020300:web:13c3ea2d6fb75627a4ef69",
+      measurementId: "G-03G1LCGDVS"
+    };
+    const PROTECTION_PASSWORD = '63258116';
+    const LOGIN_USERS = {
+      admin: { email: 'admin@bpo.com.br', senha: 'Jailton123@', perfil: 'admin', label: 'Admin' },
+      cliente: { email: 'cliente@malut.com.br', senha: 'Cliente@123', perfil: 'cliente', label: 'Cliente' }
+    };
+    const EMPRESAS = {
+      'malut-pneus': {
+        label: 'Malut Pneus',
+        contas: ['Nubank','Stone','Bling']
+      },
+      'malut-ferragens': {
+        label: 'Malut Ferragens',
+        contas: ['Sicoob','Stone','Unicred','Bling']
+      }
+    };
+
+    let state = {};
+    let ui = {
+      activeTab: 'dashboard',
+      companyView: 'ambas',
+      periodFilter: '7d',
+      customStart: '',
+      customEnd: '',
+      priorityFilter: 'todas',
+      launchFilter: 'todos',
+      weekOffset: 0,
+      searchTerm: '',
+      emergCompetencia: '',
+      pendingSearchCompetencia: '',
+      pendingSearchNome: '',
+      pendingSearchValor: '',
+      pendingSelection: [],
+      pendingPasswordAction: null,
+      actionContext: null
+    };
+
+    let firebaseAppInstance = null;
+    let firebaseDb = null;
+    let firebaseAnalyticsInstance = null;
+    let firebaseReady = false;
+    let cloudSaveTimer = null;
+    let suppressCloudSave = false;
+
+    function getTodayStr(){
+      const now = new Date();
+      const off = now.getTimezoneOffset();
+      return new Date(now.getTime() - off*60000).toISOString().slice(0,10);
+    }
+
+    function getNowHHMM(){
+      const d = new Date();
+      return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    }
+
+    function normalizeTime(time){
+      const clean = String(time || '').trim();
+      if (/^\d{2}:\d{2}$/.test(clean)) return clean;
+      if (/^\d{1}:\d{2}$/.test(clean)) {
+        const [h,m] = clean.split(':');
+        return String(h).padStart(2,'0') + ':' + m;
+      }
+      return getNowHHMM();
+    }
+
+    function defaultCashBalances(){
+      const base = {};
+      Object.entries(EMPRESAS).forEach(([empresaKey, empresa]) => {
+        base[empresaKey] = {};
+        empresa.contas.forEach(conta => {
+          base[empresaKey][conta] = {
+            saldo: 0,
+            atualizadoEm: getTodayStr() + 'T' + normalizeTime(getNowHHMM())
+          };
+        });
+      });
+      return base;
+    }
+
+    function createDefaultState(){
+      const hoje = getTodayStr();
+      const agora = normalizeTime(getNowHHMM());
+      const amanha = isoPlusDays(hoje,1);
+      const daqui3 = isoPlusDays(hoje,3);
+      const daqui5 = isoPlusDays(hoje,5);
+      const ontem = isoPlusDays(hoje,-1);
+      return {
+        saldoAtual: 18250.75,
+        dataBaseVisual: hoje,
+        horaAtualizacao: agora,
+        ferragensBalanceMode: 'caixa',
+        despesas: [
+          {
+            id: 1001,
+            empresa: 'malut-pneus',
+            conta: 'Stone',
+            descricao: 'Fornecedor Pneus | Compra Programada',
+            valorOriginal: 3200,
+            valorRestante: 3200,
+            valorPago: 0,
+            vencimento: amanha,
+            dataEfetiva: null,
+            prioridade: 'alto',
+            status: 'previsto',
+            observacao: 'Programado para o próximo recebimento.',
+            criadoEm: new Date().toISOString()
+          },
+          {
+            id: 1002,
+            empresa: 'malut-ferragens',
+            conta: 'Sicoob',
+            descricao: 'Imposto Simples Nacional',
+            valorOriginal: 1850.42,
+            valorRestante: 1850.42,
+            valorPago: 0,
+            vencimento: daqui3,
+            dataEfetiva: null,
+            prioridade: 'critico',
+            status: 'previsto',
+            observacao: 'Obrigação fiscal do período.',
+            criadoEm: new Date().toISOString()
+          },
+          {
+            id: 1003,
+            empresa: 'malut-ferragens',
+            conta: 'Unicred',
+            descricao: 'Aluguel da operação',
+            valorOriginal: 2800,
+            valorRestante: 1400,
+            valorPago: 1400,
+            vencimento: ontem,
+            dataEfetiva: ontem,
+            prioridade: 'medio',
+            status: 'provisionado',
+            observacao: 'Pagamento já comprometido financeiramente.',
+            criadoEm: new Date().toISOString()
+          }
+        ],
+        receitas: [
+          {
+            id: 2001,
+            empresa: 'malut-pneus',
+            conta: 'Bling',
+            descricao: 'Recebimento vendas e-commerce',
+            valor: 4600,
+            data: hoje,
+            dataEfetiva: hoje,
+            status: 'realizado',
+            prioridade: 'medio',
+            observacao: '',
+            criadoEm: new Date().toISOString()
+          },
+          {
+            id: 2002,
+            empresa: 'malut-ferragens',
+            conta: 'Stone',
+            descricao: 'Recebimento maquininha Stone',
+            valor: 3250.75,
+            data: daqui5,
+            dataEfetiva: null,
+            status: 'provisionado',
+            prioridade: 'baixo',
+            observacao: 'Lote previsto.',
+            criadoEm: new Date().toISOString()
+          }
+        ],
+        emergenciais: [],
+        cashBalances: {
+          'malut-pneus': {
+            'Nubank': { saldo: 5200, atualizadoEm: hoje + 'T' + agora },
+            'Stone': { saldo: 3820.15, atualizadoEm: hoje + 'T' + agora },
+            'Bling': { saldo: 1760.90, atualizadoEm: hoje + 'T' + agora }
+          },
+          'malut-ferragens': {
+            'Sicoob': { saldo: 6240.55, atualizadoEm: hoje + 'T' + agora },
+            'Stone': { saldo: 2510.11, atualizadoEm: hoje + 'T' + agora },
+            'Unicred': { saldo: 1890.30, atualizadoEm: hoje + 'T' + agora },
+            'Bling': { saldo: 940.66, atualizadoEm: hoje + 'T' + agora }
+          }
+        },
+        manualBalances: {
+          'malut-ferragens': { saldo: 11581.62, atualizadoEm: hoje + 'T' + agora }
+        },
+        version: 6
+      };
+    }
+
+    function initFirebaseServices(){
+      if (firebaseReady) return true;
+      try{
+        if (!window.firebase) return false;
+        firebaseAppInstance = firebase.apps?.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
+        firebaseDb = firebase.firestore(firebaseAppInstance);
+        try{
+          if (firebase.analytics) firebaseAnalyticsInstance = firebase.analytics(firebaseAppInstance);
+        }catch(e){}
+        firebaseReady = !!firebaseDb;
+      }catch(e){
+        firebaseReady = false;
+      }
+      return firebaseReady;
+    }
+
+    function buildNormalizedState(payload){
+      const parsed = payload && typeof payload === 'object' ? payload : {};
+      const nextState = {
+        ...createDefaultState(),
+        ...parsed
+      };
+      nextState.horaAtualizacao = normalizeTime(nextState.horaAtualizacao);
+      nextState.dataBaseVisual = getTodayStr();
+      nextState.cashBalances = mergeCashBalances(nextState.cashBalances || {});
+      nextState.manualBalances = mergeManualBalances(nextState.manualBalances || {});
+      nextState.ferragensBalanceMode = 'caixa';
+      return nextState;
+    }
+
+    function loadState(){
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) {
+        state = createDefaultState();
+        migrateLegacyData();
+        saveState();
+      } else {
+        try{
+          state = buildNormalizedState(JSON.parse(saved));
+          migrateLegacyData();
+          saveState();
+        }catch(e){
+          state = createDefaultState();
+          migrateLegacyData();
+          saveState();
+        }
+      }
+      hydrateStateFromCloud();
+    }
+
+    function scheduleCloudSave(){
+      if (suppressCloudSave || !initFirebaseServices()) return;
+      clearTimeout(cloudSaveTimer);
+      cloudSaveTimer = setTimeout(() => {
+        saveStateToCloud();
+      }, 500);
+    }
+
+    async function saveStateToCloud(){
+      if (suppressCloudSave || !initFirebaseServices()) return;
+      try{
+        await firebaseDb.collection(FIREBASE_STATE_COLLECTION).doc(FIREBASE_STATE_DOC).set({
+          state,
+          updatedAt: new Date().toISOString(),
+          appVersion: 1
+        }, { merge: true });
+      }catch(e){}
+    }
+
+    async function hydrateStateFromCloud(){
+      if (!initFirebaseServices()) return;
+      try{
+        const snap = await firebaseDb.collection(FIREBASE_STATE_COLLECTION).doc(FIREBASE_STATE_DOC).get();
+        if (!snap.exists) {
+          scheduleCloudSave();
+          return;
+        }
+        const remoteData = snap.data()?.state;
+        if (!remoteData || typeof remoteData !== 'object') return;
+        suppressCloudSave = true;
+        state = buildNormalizedState(remoteData);
+        migrateLegacyData();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        suppressCloudSave = false;
+        if (document.readyState !== 'loading') {
+          updateAll();
+          setPainelFluxoDiarioCollapsed(true);
+          setPainelPendenciasCollapsed(true);
+        }
+      }catch(e){
+        suppressCloudSave = false;
+      }
+    }
+
+    function mergeCashBalances(existing){
+      const base = defaultCashBalances();
+      Object.keys(base).forEach(empresa => {
+        Object.keys(base[empresa]).forEach(conta => {
+          if (existing[empresa] && existing[empresa][conta]) {
+            base[empresa][conta] = {
+              saldo: Number(existing[empresa][conta].saldo || 0),
+              atualizadoEm: existing[empresa][conta].atualizadoEm || base[empresa][conta].atualizadoEm
+            };
+          }
+        });
+      });
+      return base;
+    }
+
+    function mergeManualBalances(existing){
+      const nowStamp = getTodayStr() + 'T' + normalizeTime(getNowHHMM());
+      return {
+        'malut-ferragens': {
+          saldo: Number(existing['malut-ferragens']?.saldo || 0),
+          atualizadoEm: existing['malut-ferragens']?.atualizadoEm || nowStamp
+        }
+      };
+    }
+
+    function migrateLegacyData(){
+      state.despesas = (state.despesas || []).map((item, idx) => ({
+        id: item.id || Date.now() + idx,
+        empresa: item.empresa || 'malut-pneus',
+        conta: item.conta || guessConta(item.empresa || 'malut-pneus'),
+        descricao: item.descricao || item.fornecedor || 'Despesa',
+        valorOriginal: Number(item.valorOriginal || item.valor || 0),
+        valorRestante: typeof item.valorRestante === 'number'
+          ? item.valorRestante
+          : (typeof item.valor === 'number' ? item.valor : Number(item.valor || 0)),
+        valorPago: Number(item.valorPago || 0),
+        vencimento: item.vencimento || item.data || getTodayStr(),
+        dataEfetiva: item.dataPagamento || item.dataEfetiva || null,
+        prioridade: item.prioridade || 'medio',
+        status: normalizeExpenseStatus(item),
+        observacao: item.observacao || item.obs || '',
+        criadoEm: item.criadoEm || new Date().toISOString()
+      }));
+
+      state.receitas = (state.receitas || []).map((item, idx) => ({
+        id: item.id || Date.now() + 1000 + idx,
+        empresa: item.empresa || 'malut-pneus',
+        conta: item.conta || guessConta(item.empresa || 'malut-pneus'),
+        descricao: item.descricao || item.fonte || 'Receita',
+        valor: Number(item.valor || 0),
+        data: item.data || getTodayStr(),
+        dataEfetiva: item.dataEfetiva || null,
+        status: normalizeRevenueStatus(item),
+        prioridade: item.prioridade || 'medio',
+        observacao: item.observacao || item.obs || '',
+        criadoEm: item.criadoEm || new Date().toISOString()
+      }));
+
+
+      state.emergenciais = (state.emergenciais || []).map((item, idx) => ({
+        id: item.id || Date.now() + 2000 + idx,
+        empresa: item.empresa || 'malut-pneus',
+        conta: item.conta || guessConta(item.empresa || 'malut-pneus'),
+        descricao: item.descricao || item.fornecedor || 'Despesa emergencial',
+        valorOriginal: Number(item.valorOriginal || item.valor || 0),
+        valorRestante: typeof item.valorRestante === 'number' ? item.valorRestante : (typeof item.valor === 'number' ? item.valor : Number(item.valor || 0)),
+        valorPago: Number(item.valorPago || 0),
+        vencimento: item.vencimento || item.data || getTodayStr(),
+        dataEfetiva: item.dataEfetiva || item.dataPagamento || null,
+        prioridade: item.prioridade || 'critico',
+        status: normalizeExpenseStatus(item),
+        observacao: item.observacao || item.obs || '',
+        criadoEm: item.criadoEm || new Date().toISOString(),
+        origem: 'emergencial'
+      }));
+    }
+
+    function normalizeExpenseStatus(item){
+      const s = String(item.status || '').toLowerCase();
+      if (['pago','quitado','realizada','realizado','recebida','recebido'].includes(s)) return 'realizado';
+      if (['parcial','provisionado','provisionada'].includes(s)) return 'provisionado';
+      if (['pendente','previsto','prevista'].includes(s)) return 'previsto';
+      return 'previsto';
+    }
+
+    function normalizeRevenueStatus(item){
+      const s = String(item.status || '').toLowerCase();
+      if (['realizada','realizado','recebida','recebido','pago','quitado'].includes(s)) return 'realizado';
+      if (['parcial','provisionado','provisionada'].includes(s)) return 'provisionado';
+      if (['pendente','previsto','prevista'].includes(s)) return 'previsto';
+      return 'previsto';
+    }
+
+    function isOpenStatus(status){
+      return ['previsto','provisionado'].includes(String(status || '').toLowerCase());
+    }
+
+    function isCompletedStatus(status){
+      return String(status || '').toLowerCase() === 'realizado';
+    }
+
+    function getStatusLabel(status){
+      const map = { previsto:'previsto', provisionado:'provisionado', realizado:'realizado' };
+      return map[String(status || '').toLowerCase()] || 'previsto';
+    }
+
+    function saveState(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      scheduleCloudSave();
+    }
+
+    let currentAuth = null;
+
+    function getAuth(){
+      return currentAuth;
+    }
+
+    function setAuth(auth){
+      currentAuth = auth ? { ...auth } : null;
+    }
+
+    function clearAuth(){
+      currentAuth = null;
+      try{
+        localStorage.removeItem(AUTH_KEY);
+      }catch(e){}
+    }
+
+    function isAdmin(){
+      const auth = getAuth();
+      return auth && auth.perfil === 'admin';
+    }
+
+    function isCliente(){
+      const auth = getAuth();
+      return auth && auth.perfil === 'cliente';
+    }
+
+    function enforceReadonlyUI(){
+      const root = document.getElementById('appRoot');
+      root.classList.toggle('readonly', isCliente());
+      document.querySelectorAll('[data-admin-only="true"]').forEach(el => {
+        el.disabled = isCliente();
+      });
+    }
+
+    function guessConta(empresaKey){
+      const contas = EMPRESAS[empresaKey]?.contas || ['Bling'];
+      return contas[0];
+    }
+
+    function formatarValor(valor){
+      const numero = Number(valor);
+      const seguro = Number.isFinite(numero) ? numero : 0;
+      return seguro.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+
+    function resumoTextoSeguro(valor, fallback='Sem leitura disponível'){
+      const texto = String(valor ?? '').trim();
+      return texto || fallback;
+    }
+
+    function resumoQuantidadeSegura(valor, singular='lançamento(s)'){
+      const numero = Number(valor);
+      const seguro = Number.isFinite(numero) && numero >= 0 ? numero : 0;
+      return `${seguro} ${singular}`;
+    }
+
+    function parseMoeda(str){
+      if (!str) return 0;
+      return Number(String(str).replace(/\./g,'').replace(',','.').replace(/[^\d.-]/g,'')) || 0;
+    }
+
+    function formatarMoeda(input){
+      const raw = String(input.value || '').replace(/\D/g,'');
+      const n = (parseInt(raw || '0',10) / 100);
+      input.value = formatarValor(n);
+    }
+
+    function formatDateLabel(iso){
+      if (!iso) return '-';
+      const [y,m,d] = iso.slice(0,10).split('-');
+      return `${d}/${m}/${y}`;
+    }
+
+    function formatShortDate(iso){
+      if (!iso) return '-';
+      const [y,m,d] = iso.slice(0,10).split('-');
+      return `${d}/${m}`;
+    }
+
+    function diaSemana(iso){
+      const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+      const d = new Date(iso + 'T12:00:00');
+      return dias[d.getDay()];
+    }
+
+    function isoPlusDays(iso, days){
+      const d = new Date(iso + 'T12:00:00');
+      d.setDate(d.getDate() + days);
+      return d.toISOString().slice(0,10);
+    }
+
+    function diffDays(a, b){
+      const da = new Date(a + 'T12:00:00');
+      const db = new Date(b + 'T12:00:00');
+      return Math.floor((da - db)/86400000);
+    }
+
+    function isWeekend(iso){
+      const d = new Date(iso + 'T12:00:00').getDay();
+      return d === 0 || d === 6;
+    }
+
+    function statusFinalizado(item){
+      return isCompletedStatus(item.status);
+    }
+
+    function getEffectiveDate(item){
+      if (item.tipo === 'despesa') {
+        return item.dataEfetiva || item.vencimento;
+      }
+      return item.dataEfetiva || item.data;
+    }
+
+    function getExpenseReferenceDate(item){
+      if (item.status === 'realizado' || item.status === 'provisionado') {
+        return item.dataEfetiva || item.vencimento;
+      }
+      return item.vencimento;
+    }
+
+    function getRevenueReferenceDate(item){
+      return item.dataEfetiva || item.data;
+    }
+
+
+    function summarizeDayStatus(entries){
+      const summary = {
+        entradas: { previsto:0, provisionado:0, realizado:0 },
+        saidas: { previsto:0, provisionado:0, realizado:0 }
+      };
+      (entries || []).forEach(item => {
+        const bucket = item.tipo === 'receita' ? summary.entradas : summary.saidas;
+        const status = getStatusLabel(item.status);
+        bucket[status] += Number(getEntryAmount(item) || 0);
+      });
+      return summary;
+    }
+
+    function getVisibleCompanyLabel(){
+      const map = {
+        'ambas': '🧩 AMBAS AS EMPRESAS',
+        'malut-pneus': '🛞 MALUT PNEUS',
+        'malut-ferragens': '🏭 MALUT FERRAGENS'
+      };
+      return map[ui.companyView] || 'EMPRESA';
+    }
+
+    function getViewSourceLabel(){
+      return 'Visão de Caixa';
+    }
+
+    function latestCashTimestamp(companyKey){
+      const items = Object.values(state.cashBalances[companyKey] || {});
+      const timestamps = items.map(item => item.atualizadoEm).filter(Boolean).sort();
+      return timestamps.length ? timestamps[timestamps.length - 1] : null;
+    }
+
+    function getManualFerragensBalance(){
+      return Number(state.manualBalances?.['malut-ferragens']?.saldo || 0);
+    }
+
+    function getFerragensBaseBalance(){
+      return sumCompanyCash('malut-ferragens');
+    }
+
+    function getCurrentBalanceTimestampForView(){
+      if (ui.companyView === 'malut-pneus') return latestCashTimestamp('malut-pneus');
+      if (ui.companyView === 'malut-ferragens') return latestCashTimestamp('malut-ferragens');
+      const stamps = [latestCashTimestamp('malut-pneus'), latestCashTimestamp('malut-ferragens')];
+      const filtered = stamps.filter(Boolean).sort();
+      return filtered.length ? filtered[filtered.length - 1] : null;
+    }
+
+    function getCompanyEntries(){
+      const despesas = state.despesas.map(d => ({...d, tipo:'despesa', origem:'lancamentos'}));
+      const emergenciais = (state.emergenciais || []).map(d => ({...d, tipo:'despesa', origem:'emergencial'}));
+      const receitas = state.receitas.map(r => ({...r, tipo:'receita', origem:'lancamentos'}));
+      let entries = [...despesas, ...emergenciais, ...receitas];
+      if (ui.companyView !== 'ambas') {
+        entries = entries.filter(item => item.empresa === ui.companyView);
+      }
+      return entries;
+    }
+
+    function getEmergencyEntries(){
+      let items = (state.emergenciais || []).map(item => ({ ...item, tipo:'despesa', origem:'emergencial' }));
+      if (ui.companyView !== 'ambas') items = items.filter(item => item.empresa === ui.companyView);
+      return items;
+    }
+
+    function getEmergencyCompetence(item){
+      const ref = item.dataEfetiva || item.vencimento || getTodayStr();
+      return String(ref).slice(0,7);
+    }
+
+    function formatCompetenceLabel(comp){
+      const [ano, mes] = String(comp || '').split('-');
+      const nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+      const idx = Number(mes || 0) - 1;
+      return idx >= 0 ? `${nomes[idx]}/${ano}` : comp;
+    }
+
+    function getFilteredEntriesForRange(){
+      const today = getTodayStr();
+      let start = today;
+      let end = today;
+
+      if (ui.periodFilter === '7d') end = isoPlusDays(today, 7);
+      else if (ui.periodFilter === '15d') end = isoPlusDays(today, 15);
+      else if (ui.periodFilter === '30d') end = isoPlusDays(today, 30);
+      else if (ui.periodFilter === 'custom') {
+        start = ui.customStart || today;
+        end = ui.customEnd || today;
+      }
+
+      const entries = getCompanyEntries();
+
+      if (ui.periodFilter === 'vencidas') {
+        return entries.filter(item => item.tipo === 'despesa' && item.status !== 'realizado' && item.vencimento <= today);
+      }
+
+      return entries.filter(item => {
+        const ref = item.tipo === 'despesa' ? getExpenseReferenceDate(item) : getRevenueReferenceDate(item);
+        return ref >= start && ref <= end;
+      });
+    }
+
+    function getPeriodBounds(){
+      const today = getTodayStr();
+      if (ui.periodFilter === '7d') return { start: today, end: isoPlusDays(today, 7), label: 'Hoje até +7 dias' };
+      if (ui.periodFilter === '15d') return { start: today, end: isoPlusDays(today, 15), label: 'Hoje até +15 dias' };
+      if (ui.periodFilter === '30d') return { start: today, end: isoPlusDays(today, 30), label: 'Hoje até +30 dias' };
+      if (ui.periodFilter === 'vencidas') return { start: null, end: today, label: 'Somente vencidas até hoje' };
+      return {
+        start: ui.customStart || today,
+        end: ui.customEnd || today,
+        label: `Personalizado: ${formatDateLabel(ui.customStart || today)} a ${formatDateLabel(ui.customEnd || today)}`
+      };
+    }
+
+    function getVisibleCompanyKeys(){
+      return ui.companyView === 'ambas'
+        ? Object.keys(EMPRESAS)
+        : [ui.companyView].filter(Boolean);
+    }
+
+    function sumCompanyCash(companyKey){
+      const contas = Object.values(state.cashBalances[companyKey] || {});
+      return contas.reduce((acc, item) => acc + Number(item.saldo || 0), 0);
+    }
+
+    function getSystemCashTotal(){
+      return Object.keys(EMPRESAS).reduce((acc, companyKey) => acc + sumCompanyCash(companyKey), 0);
+    }
+
+    function getProjectedCurrentBalance(){
+      return getVisibleCompanyKeys().reduce((acc, companyKey) => acc + sumCompanyCash(companyKey), 0);
+    }
+
+    function getAllCashEntries(){
+      const despesas = state.despesas.map(d => ({...d, tipo:'despesa', origem:'lancamentos'}));
+      const emergenciais = (state.emergenciais || []).map(d => ({...d, tipo:'despesa', origem:'emergencial'}));
+      const receitas = state.receitas.map(r => ({...r, tipo:'receita', origem:'lancamentos'}));
+      return [...despesas, ...emergenciais, ...receitas];
+    }
+
+    function getProjectedClosingBalance(companyKeys = getVisibleCompanyKeys()){
+      const keys = (companyKeys || []).filter(companyKey => EMPRESAS[companyKey]);
+      if (!keys.length) return 0;
+
+      const bounds = getPeriodBounds();
+      const today = getTodayStr();
+      const start = bounds.start || today;
+      const end = bounds.end || today;
+      const snapshot = getCashBalancesSnapshot(keys);
+      const relevantEntries = getAllCashEntries().filter(item => keys.includes(item.empresa));
+
+      if (start > today){
+        const preEntries = relevantEntries.filter(item => {
+          const ref = item.tipo === 'despesa' ? getExpenseReferenceDate(item) : getRevenueReferenceDate(item);
+          return ref >= today && ref < start;
+        });
+        applyEntriesToSnapshot(snapshot, preEntries);
+      }
+
+      const periodEntries = relevantEntries.filter(item => {
+        const ref = item.tipo === 'despesa' ? getExpenseReferenceDate(item) : getRevenueReferenceDate(item);
+        return ref >= start && ref <= end;
+      });
+      applyEntriesToSnapshot(snapshot, periodEntries);
+      return sumSnapshotBalances(snapshot);
+    }
+
+    function getCashBalancesSnapshot(companyKeys = getVisibleCompanyKeys()){
+      const snapshot = {};
+      companyKeys.forEach(companyKey => {
+        snapshot[companyKey] = {};
+        (EMPRESAS[companyKey]?.contas || []).forEach(conta => {
+          snapshot[companyKey][conta] = Number(state.cashBalances?.[companyKey]?.[conta]?.saldo || 0);
+        });
+      });
+      return snapshot;
+    }
+
+    function cloneBalanceSnapshot(snapshot){
+      return JSON.parse(JSON.stringify(snapshot || {}));
+    }
+
+    function getEntryCompanyKey(item){
+      return item?.empresa && EMPRESAS[item.empresa] ? item.empresa : null;
+    }
+
+    function getEntryConta(item){
+      const companyKey = getEntryCompanyKey(item);
+      if (!companyKey) return null;
+      const contas = EMPRESAS[companyKey]?.contas || [];
+      if (contas.includes(item?.conta)) return item.conta;
+      return contas[0] || null;
+    }
+
+    function getEntryAmount(item){
+      return Number(item?.tipo === 'despesa' ? (item.valorRestante || item.valorOriginal || 0) : (item.valor || 0));
+    }
+
+    function sumSnapshotBalances(snapshot){
+      return Object.values(snapshot || {}).reduce((totalEmpresas, contas) => {
+        return totalEmpresas + Object.values(contas || {}).reduce((totalContas, saldo) => totalContas + Number(saldo || 0), 0);
+      }, 0);
+    }
+
+    function applyEntriesToSnapshot(snapshot, entries){
+      (entries || []).forEach(item => {
+        const companyKey = getEntryCompanyKey(item);
+        const conta = getEntryConta(item);
+        if (!companyKey || !conta || !snapshot[companyKey]) return;
+        if (typeof snapshot[companyKey][conta] !== 'number') snapshot[companyKey][conta] = 0;
+        const amount = getEntryAmount(item);
+        snapshot[companyKey][conta] += item.tipo === 'receita' ? amount : -amount;
+      });
+      return snapshot;
+    }
+
+    function updateHeaderAndProfile(){
+      const auth = getAuth();
+      document.getElementById('perfilLogadoLabel').textContent = auth ? auth.label : '-';
+      document.getElementById('empresaVisaoLabel').textContent = ui.companyView === 'ambas'
+        ? 'Ambas'
+        : EMPRESAS[ui.companyView]?.label || 'Ambas';
+      document.getElementById('dataBaseVisual').value = state.dataBaseVisual || getTodayStr();
+      document.getElementById('horaAtualizacao').value = normalizeTime(state.horaAtualizacao);
+      const horaAtualizadaLabel = document.getElementById('horaAtualizadaLabel');
+      const dataBaseOficialLabel = document.getElementById('dataBaseOficialLabel');
+      if (horaAtualizadaLabel) horaAtualizadaLabel.textContent = normalizeTime(state.horaAtualizacao);
+      if (dataBaseOficialLabel) dataBaseOficialLabel.textContent = formatDateLabel(state.dataBaseVisual || getTodayStr());
+      document.getElementById('saldoAtual').value = formatarValor(getProjectedCurrentBalance());
+      document.getElementById('lancamentoEmpresaDestaque').textContent = 'Visualização atual: ' + getVisibleCompanyLabel();
+      enforceReadonlyUI();
+    }
+
+    function getFlowRiskMeta(row, contextRows){
+      if (!row) return { risk: 'estavel', label: 'Estável', helper: 'Dia equilibrado, sem pressão relevante de caixa.' };
+      const rows = Array.isArray(contextRows) && contextRows.length ? contextRows : getFlowRows();
+      const saldosFinais = rows.map(item => Number(item.saldoFinal || 0));
+      const positiveSaldos = saldosFinais.filter(value => value > 0);
+      const avgPositive = positiveSaldos.length ? positiveSaldos.reduce((acc, value) => acc + value, 0) / positiveSaldos.length : 0;
+      const avgSaidas = rows.length ? rows.reduce((acc, item) => acc + Number(item.saidas || 0), 0) / rows.length : 0;
+      const saldoMuitoBaixo = row.saldoFinal >= 0 && avgPositive > 0 && row.saldoFinal <= avgPositive * 0.35;
+      const saidaMuitoAlta = row.saidas > 0 && avgSaidas > 0 && row.saidas >= avgSaidas * 1.8;
+      const pressaoCaixa = row.saidas > row.entradas && row.saldoFinal <= Math.max(0, row.saldoInicial * 0.5);
+
+      if (row.saldoFinal < 0) {
+        return { risk: 'critico', label: 'Crítico', helper: 'Saldo final negativo. O dia exige reforço imediato de caixa.' };
+      }
+      if (saidaMuitoAlta && (pressaoCaixa || saldoMuitoBaixo)) {
+        return { risk: 'critico', label: 'Crítico', helper: 'Saídas muito altas pressionam fortemente o caixa deste dia.' };
+      }
+      if (saldoMuitoBaixo) {
+        return { risk: 'atencao', label: 'Atenção', helper: 'Saldo final baixo em relação ao padrão do período.' };
+      }
+      if (pressaoCaixa || saidaMuitoAlta) {
+        return { risk: 'atencao', label: 'Atenção', helper: 'Saídas acima das entradas deixam o caixa mais apertado.' };
+      }
+      return { risk: 'estavel', label: 'Estável', helper: 'Dia equilibrado, sem pressão relevante de caixa.' };
+    }
+
+    function classifyFlowRisk(row, contextRows){
+      return getFlowRiskMeta(row, contextRows).risk;
+    }
+
+    function riskLabelFromRow(row, contextRows){
+      return getFlowRiskMeta(row, contextRows).label;
+    }
+
+    function riskHelperFromRow(row, contextRows){
+      return getFlowRiskMeta(row, contextRows).helper;
+    }
+
+    function renderDashboardProjectionSummary(){
+      const rows = getFlowRows();
+      const bounds = getPeriodBounds();
+      if (!rows.length){
+        ['projSaldoHoje','projMenorSaldo','projMaiorSaida'].forEach(id => {
+          const el = document.getElementById(id); if (el) el.textContent = 'R$ 0,00';
+        });
+        document.getElementById('projDiaCritico').textContent = 'Sem risco';
+        document.getElementById('projSaldoHojeHelper').textContent = 'Sem dados no período.';
+        document.getElementById('projMenorSaldoHelper').textContent = 'Sem dados no período.';
+        document.getElementById('projMaiorSaidaHelper').textContent = 'Sem dados no período.';
+        document.getElementById('projDiaCriticoHelper').textContent = 'Sem dados no período.';
+        document.getElementById('insightFechamento').textContent = 'Saldo projetado sem leitura.';
+        document.getElementById('insightFechamentoHelper').textContent = 'Sem dados no período.';
+        document.getElementById('insightAtencao').textContent = 'Sem alertas relevantes.';
+        document.getElementById('insightAtencaoHelper').textContent = 'Sem dados no período.';
+        return;
+      }
+
+      const firstRow = rows[0];
+      const lastRow = rows[rows.length - 1];
+      const lowestRow = rows.reduce((best, row) => row.saldoFinal < best.saldoFinal ? row : best, rows[0]);
+      const highestOutflowRow = rows.reduce((best, row) => row.saidas > best.saidas ? row : best, rows[0]);
+      const criticalRow = rows.find(row => row.saldoFinal < 0) || rows.find(row => classifyFlowRisk(row) === 'atencao') || null;
+
+      document.getElementById('projSaldoHoje').textContent = 'R$ ' + formatarValor(firstRow.saldoInicial);
+      document.getElementById('projSaldoHojeHelper').textContent = `${formatDateLabel(firstRow.data)} • saldo inicial da janela ${bounds.label.toLowerCase()}.`;
+
+      document.getElementById('projMenorSaldo').textContent = 'R$ ' + formatarValor(lowestRow.saldoFinal);
+      document.getElementById('projMenorSaldoHelper').textContent = `${formatDateLabel(lowestRow.data)} • ${riskLabelFromRow(lowestRow)} no fechamento do dia.`;
+
+      document.getElementById('projMaiorSaida').textContent = 'R$ ' + formatarValor(highestOutflowRow.saidas);
+      document.getElementById('projMaiorSaidaHelper').textContent = highestOutflowRow.saidas > 0
+        ? `${formatDateLabel(highestOutflowRow.data)} concentra a maior saída do período.`
+        : 'Não há saídas previstas na janela analisada.';
+
+      document.getElementById('projDiaCritico').textContent = criticalRow ? formatDateLabel(criticalRow.data) : 'Sem risco';
+      document.getElementById('projDiaCriticoHelper').textContent = criticalRow
+        ? `Saldo final de R$ ${formatarValor(criticalRow.saldoFinal)} com leitura ${riskLabelFromRow(criticalRow).toLowerCase()}.`
+        : 'Nenhum saldo negativo ou aperto relevante identificado.';
+
+      const fechamentoLabel = lastRow.saldoFinal >= 0
+        ? `Fechamento projetado em R$ ${formatarValor(lastRow.saldoFinal)}.`
+        : `Fechamento projetado negativo em R$ ${formatarValor(lastRow.saldoFinal)}.`;
+      const fechamentoHelper = lastRow.saldoFinal >= 0
+        ? `A operação encerra ${bounds.label.toLowerCase()} com cobertura positiva.`
+        : `A operação encerra ${bounds.label.toLowerCase()} exigindo reforço de caixa.`;
+      document.getElementById('insightFechamento').textContent = fechamentoLabel;
+      document.getElementById('insightFechamentoHelper').textContent = fechamentoHelper;
+
+      let atencao = 'Sem alertas relevantes.';
+      let atencaoHelper = 'O caixa projetado permanece controlado na janela analisada.';
+      if (criticalRow){
+        atencao = `Aperto previsto em ${formatDateLabel(criticalRow.data)}.`;
+        atencaoHelper = `Entradas de R$ ${formatarValor(criticalRow.entradas)} versus saídas de R$ ${formatarValor(criticalRow.saidas)} nesse dia.`;
+      } else if (highestOutflowRow.saidas > 0){
+        atencao = `Monitorar ${formatDateLabel(highestOutflowRow.data)}.`;
+        atencaoHelper = `É o dia com maior pressão de pagamento: R$ ${formatarValor(highestOutflowRow.saidas)} em saídas.`;
+      }
+      document.getElementById('insightAtencao').textContent = atencao;
+      document.getElementById('insightAtencaoHelper').textContent = atencaoHelper;
+
+      const subtitle = criticalRow
+        ? `Projeção diária do caixa com alerta em ${formatDateLabel(criticalRow.data)} e fechamento de R$ ${formatarValor(lastRow.saldoFinal)}.`
+        : `Projeção diária do caixa com fechamento previsto de R$ ${formatarValor(lastRow.saldoFinal)} em ${bounds.label.toLowerCase()}.`;
+      document.getElementById('chartSubtitle').textContent = subtitle;
+    }
+
+    function updateKPIs(){
+      const today = getTodayStr();
+      const bounds = getPeriodBounds();
+      const entries = getCompanyEntries();
+
+      const saldoAtual = getProjectedCurrentBalance();
+      const flowRows = getFlowRows();
+      const saldoProjetado = flowRows.length ? flowRows[flowRows.length - 1].saldoFinal : saldoAtual;
+      const vencidas = entries
+        .filter(item => item.tipo === 'despesa' && item.status !== 'realizado' && item.vencimento <= today)
+        .reduce((acc, item) => acc + Number(item.valorRestante || item.valorOriginal || 0), 0);
+
+      const periodoEntries = getFilteredEntriesForRange();
+      const previsaoEntries = periodoEntries.filter(item => ['previsto','provisionado'].includes(getStatusLabel(item.status)));
+      const saidasPeriodo = previsaoEntries
+        .filter(item => item.tipo === 'despesa')
+        .reduce((acc, item) => acc + Number(item.valorRestante || item.valorOriginal || 0), 0);
+
+      const entradasPeriodo = previsaoEntries
+        .filter(item => item.tipo === 'receita')
+        .reduce((acc, item) => acc + Number(item.valor || 0), 0);
+
+      const provisionadas = periodoEntries
+        .filter(item => ['previsto','provisionado'].includes(getStatusLabel(item.status)))
+        .reduce((acc, item) => acc + Number(item.tipo === 'despesa' ? (item.valorRestante || item.valorOriginal || 0) : item.valor || 0), 0);
+
+      document.getElementById('kpiSaldoAtual').textContent = 'R$ ' + formatarValor(saldoAtual);
+      document.getElementById('kpiVencidas').textContent = 'R$ ' + formatarValor(vencidas);
+      document.getElementById('kpiSaidasPeriodo').textContent = 'R$ ' + formatarValor(saidasPeriodo);
+      document.getElementById('kpiEntradasPeriodo').textContent = 'R$ ' + formatarValor(entradasPeriodo);
+      document.getElementById('kpiProvisionadas').textContent = 'R$ ' + formatarValor(provisionadas);
+      document.getElementById('kpiSaldoProjetado').textContent = 'R$ ' + formatarValor(saldoProjetado);
+
+      document.getElementById('resumoSaldoBancarioAtual').textContent = 'R$ ' + formatarValor(saldoAtual);
+      document.getElementById('resumoSaldoBancarioAtualHelper').textContent = resumoTextoSeguro(getViewSourceLabel());
+      document.getElementById('resumoEntradasPrevistas').textContent = 'R$ ' + formatarValor(entradasPeriodo);
+      document.getElementById('resumoEntradasPrevistasHelper').textContent = resumoQuantidadeSegura(previsaoEntries.filter(item => item.tipo === 'receita').length);
+      document.getElementById('resumoSaidasPrevistas').textContent = 'R$ ' + formatarValor(saidasPeriodo);
+      document.getElementById('resumoSaidasPrevistasHelper').textContent = resumoQuantidadeSegura(previsaoEntries.filter(item => item.tipo === 'despesa').length);
+      document.getElementById('resumoSaldoProjetadoFinal').textContent = 'R$ ' + formatarValor(saldoProjetado);
+      document.getElementById('resumoSaldoProjetadoFinalHelper').textContent = bounds.label;
+      document.getElementById('resumoTotalVencido').textContent = 'R$ ' + formatarValor(vencidas);
+      document.getElementById('resumoTotalVencidoHelper').textContent = resumoQuantidadeSegura(entries.filter(item => item.tipo === 'despesa' && item.status !== 'realizado' && item.vencimento <= today).length, 'pendência(s)');
+
+      const necessidadeCaixaLabel = saldoProjetado >= 0
+        ? 'Cobertura confortável'
+        : 'Necessidade de reforço';
+      const necessidadeCaixaHelper = saldoProjetado >= 0
+        ? 'Saldo projetado permanece positivo na janela analisada.'
+        : `Faltam R$ ${formatarValor(Math.abs(saldoProjetado))} para cobrir o período analisado.`;
+      document.getElementById('resumoNecessidadeCaixa').textContent = necessidadeCaixaLabel;
+      document.getElementById('resumoNecessidadeCaixaHelper').textContent = necessidadeCaixaHelper;
+    }
+
+    function priorityClass(item){
+      const p = String(item.prioridade || 'aclassificar').toLowerCase().replace(/\s+/g,'');
+      const normalized = p === 'a classificar' ? 'aclassificar' : p;
+      return ['critico','alto','medio','baixo','aclassificar'].includes(normalized) ? normalized : 'aclassificar';
+    }
+
+    function priorityLabel(value){
+      const labels = { critico:'Crítico', alto:'Alto', medio:'Médio', baixo:'Baixo', aclassificar:'A Classificar' };
+      return labels[priorityClass({ prioridade:value })] || 'A Classificar';
+    }
+
+    function updateItemPriority(id, tipo, prioridade){
+      const list = tipo === 'despesa' ? state.despesas : state.receitas;
+      const item = list.find(i => i.id === id);
+      if (!item) return;
+      item.prioridade = priorityClass({ prioridade });
+      state.horaAtualizacao = normalizeTime(getNowHHMM());
+      saveState();
+      updateAll();
+      toast('Prioridade atualizada com sucesso.', 'success');
+    }
+
+    
+    function getPendenciaCompetencia(item){
+      return String(item.competencia || item.vencimento || '').slice(0,7);
+    }
+
+    function getPendenciasItems(){
+      const bounds = getPeriodBounds();
+      let items = getCompanyEntries().filter(item => item.tipo === 'despesa' && item.status !== 'realizado' && item.vencimento <= bounds.end);
+      if (ui.priorityFilter !== 'todas') {
+        items = items.filter(item => priorityClass(item) === ui.priorityFilter);
+      }
+      if (ui.pendingSearchCompetencia) {
+        items = items.filter(item => getPendenciaCompetencia(item) === ui.pendingSearchCompetencia);
+      }
+      if (ui.pendingSearchNome) {
+        const term = String(ui.pendingSearchNome).toLowerCase().trim();
+        items = items.filter(item => String(item.descricao || '').toLowerCase().includes(term));
+      }
+      if (ui.pendingSearchValor) {
+        const filtroValor = parseMoeda(ui.pendingSearchValor);
+        items = items.filter(item => {
+          const restante = Number(item.valorRestante || item.valorOriginal || 0);
+          return Math.abs(restante - filtroValor) < 0.005;
+        });
+      }
+      items.sort((a,b) => {
+        const prioridadeOrder = { critico:0, alto:1, medio:2, baixo:3, aclassificar:4 };
+        const diffP = prioridadeOrder[priorityClass(a)] - prioridadeOrder[priorityClass(b)];
+        if (diffP !== 0) return diffP;
+        return String(a.vencimento).localeCompare(String(b.vencimento));
+      });
+      return items;
+    }
+
+    function syncPendenciaSelection(validItems){
+      const ids = new Set(validItems.map(item => String(item.id)));
+      ui.pendingSelection = ui.pendingSelection.filter(id => ids.has(String(id)));
+    }
+
+    function getPendenciaSelectionSummary(items){
+      const selectedIds = new Set(ui.pendingSelection.map(String));
+      const selectedItems = items.filter(item => selectedIds.has(String(item.id)));
+      const totalSelecionado = selectedItems.reduce((acc, item) => acc + Number(item.valorRestante || item.valorOriginal || 0), 0);
+      const porBase = selectedItems.reduce((acc, item) => {
+        const key = item.empresa || 'sem-base';
+        acc[key] = (acc[key] || 0) + Number(item.valorRestante || item.valorOriginal || 0);
+        return acc;
+      }, {});
+      return { selectedItems, totalSelecionado, porBase };
+    }
+
+    function updatePendenciaSelectionUI(items){
+      const selectAll = document.getElementById('selecionarTodasPendencias');
+      const selectedIds = new Set(ui.pendingSelection.map(String));
+      const visibleCount = items.length;
+      const selectedVisible = items.filter(item => selectedIds.has(String(item.id))).length;
+      if (selectAll){
+        selectAll.checked = visibleCount > 0 && selectedVisible === visibleCount;
+        selectAll.indeterminate = selectedVisible > 0 && selectedVisible < visibleCount;
+      }
+      const { selectedItems, totalSelecionado, porBase } = getPendenciaSelectionSummary(items);
+      document.getElementById('pendenciasQtdSelecionada').textContent = `${selectedItems.length} lançamento(s)`;
+      document.getElementById('pendenciasValorSelecionado').textContent = `R$ ${formatarValor(totalSelecionado)}`;
+      const resumoBases = document.getElementById('pendenciasResumoBases');
+      const bases = Object.entries(porBase);
+      resumoBases.innerHTML = bases.length
+        ? `<div class="pendencia-base-grid">${bases.map(([empresa, total]) => `<div class="pendencia-base-card"><strong>${escapeHtml(EMPRESAS[empresa]?.label || 'Base')}</strong><span>R$ ${formatarValor(total)}</span></div>`).join('')}</div>`
+        : '';
+    }
+
+    function renderPendencias(){
+      const container = document.getElementById('listaPendencias');
+      const today = getTodayStr();
+      const items = getPendenciasItems();
+      syncPendenciaSelection(items);
+
+      const totalFiltrado = items.reduce((acc, item) => acc + Number(item.valorRestante || item.valorOriginal || 0), 0);
+      document.getElementById('badgePendencias').textContent = String(items.length);
+      document.getElementById('pendenciasQtdFiltrada').textContent = `${items.length} lançamento(s)`;
+      document.getElementById('pendenciasValorFiltrado').textContent = `R$ ${formatarValor(totalFiltrado)}`;
+
+      if (!items.length){
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="emoji">✅</div>
+            <div>Nenhum lançamento encontrado no filtro atual.</div>
+          </div>
+        `;
+        updatePendenciaSelectionUI(items);
+        return;
+      }
+
+      container.innerHTML = items.map(item => {
+        const restante = Number(item.valorRestante || item.valorOriginal || 0);
+        const atraso = diffDays(today, item.vencimento);
+        const selected = ui.pendingSelection.map(String).includes(String(item.id));
+        const leituraPrazo = atraso > 0
+          ? `${atraso} dia(s) em atraso`
+          : atraso === 0
+            ? 'Vence hoje'
+            : `Vence em ${Math.abs(atraso)} dia(s)`;
+        return `
+          <div class="pendencia-item ${priorityClass(item)}">
+            <div class="pendencia-select">
+              <label class="check-inline" aria-label="Selecionar lançamento ${escapeHtml(item.descricao)}">
+                <input type="checkbox" data-pendencia-select="${item.id}" ${selected ? 'checked' : ''}>
+                <span class="sr-only">Selecionar</span>
+              </label>
+              <div style="flex:1;min-width:0">
+                <div class="pendencia-header">
+                  <div>
+                    <div class="pendencia-title">${escapeHtml(item.descricao)}</div>
+                    <div class="small muted">${escapeHtml(EMPRESAS[item.empresa]?.label || 'Empresa')} • Competência: ${escapeHtml(formatCompetenceLabel(getPendenciaCompetencia(item)))}</div>
+                  </div>
+                  <span class="tag ${priorityClass(item)}">${priorityLabel(item.prioridade)}</span>
+                </div>
+                <div class="pendencia-meta">
+                  <span class="status-badge ${escapeHtml(getStatusLabel(item.status))}">${escapeHtml(getStatusLabel(item.status))}</span>
+                  <span class="flow-chip"><strong>Vencimento</strong> ${formatDateLabel(item.vencimento)}</span>
+                  <span class="flow-chip"><strong>Valor</strong> R$ ${formatarValor(restante)}</span>
+                  <span class="flow-chip"><strong>Situação</strong> ${leituraPrazo}</span>
+                </div>
+                <div class="small muted">${escapeHtml(item.observacao || 'Sem observações.')}</div>
+                <div class="pendencia-actions" style="margin-top:.75rem">
+                  <div class="priority-action-inline">
+                    <span class="small muted"><strong>Prioridade</strong></span>
+                    <select class="priority-inline-select" onchange="updateItemPriority(${item.id}, 'despesa', this.value)">
+                      <option value="critico" ${priorityClass(item)==='critico' ? 'selected' : ''}>Crítico</option>
+                      <option value="alto" ${priorityClass(item)==='alto' ? 'selected' : ''}>Alto</option>
+                      <option value="medio" ${priorityClass(item)==='medio' ? 'selected' : ''}>Médio</option>
+                      <option value="baixo" ${priorityClass(item)==='baixo' ? 'selected' : ''}>Baixo</option>
+                      <option value="aclassificar" ${priorityClass(item)==='aclassificar' ? 'selected' : ''}>A Classificar</option>
+                    </select>
+                  </div>
+                  <button class="btn btn-success btn-small ${isCliente() ? 'admin-only' : ''}" onclick="abrirRegistrarPagamento(${item.id})">Marcar como realizado</button>
+                  ${item.status === 'provisionado' ? `<button class="btn btn-secondary btn-small ${isCliente() ? 'admin-only' : ''}" onclick="desfazerProvisionamentoDespesa(${item.id})">Voltar para previsto</button>` : `<button class="btn btn-warning btn-small ${isCliente() ? 'admin-only' : ''}" onclick="abrirProvisionarDespesa(${item.id})">Provisionar</button>`}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('[data-pendencia-select]').forEach(input => {
+        input.addEventListener('change', e => {
+          const id = String(e.target.dataset.pendenciaSelect);
+          if (e.target.checked) {
+            if (!ui.pendingSelection.map(String).includes(id)) ui.pendingSelection.push(id);
+          } else {
+            ui.pendingSelection = ui.pendingSelection.filter(itemId => String(itemId) !== id);
+          }
+          updatePendenciaSelectionUI(items);
+        });
+      });
+
+      updatePendenciaSelectionUI(items);
+    }
+
+    function setPainelPendenciasCollapsed(collapsed){
+      const panel = document.getElementById('painelPendencias');
+      if (!panel) return;
+      panel.classList.toggle('is-collapsed', collapsed);
+      const header = panel.querySelector('.panel-header');
+      const label = panel.querySelector('.panel-toggle-label');
+      if (header) header.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      if (label) label.textContent = collapsed ? 'Expandir' : 'Recolher';
+    }
+
+    function togglePainelPendencias(event){
+      if (event && event.target && (event.target.closest('button') || event.target.closest('input') || event.target.closest('select') || event.target.closest('label'))) return;
+      const panel = document.getElementById('painelPendencias');
+      if (!panel) return;
+      setPainelPendenciasCollapsed(!panel.classList.contains('is-collapsed'));
+    }
+
+    function handleTogglePainelPendencias(event){
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        togglePainelPendencias(event);
+      }
+    }
+
+    function clearPendenciaSelection(){
+      ui.pendingSelection = [];
+      renderPendencias();
+    }
+
+    function toggleAllPendencias(checked){
+      const items = getPendenciasItems();
+      ui.pendingSelection = checked ? items.map(item => String(item.id)) : [];
+      renderPendencias();
+    }
+
+function getFlowRows(){
+      const bounds = getPeriodBounds();
+      const today = getTodayStr();
+      const start = bounds.start || today;
+      const end = bounds.end || today;
+      const allEntries = getCompanyEntries();
+      const companyKeys = getVisibleCompanyKeys();
+      let runningSnapshot = getCashBalancesSnapshot(companyKeys);
+
+      if (start > today){
+        const preEntries = allEntries.filter(item => {
+          const ref = item.tipo === 'despesa' ? getExpenseReferenceDate(item) : getRevenueReferenceDate(item);
+          return ref >= today && ref < start;
+        });
+        applyEntriesToSnapshot(runningSnapshot, preEntries);
+      }
+
+      const rows = [];
+      for (let date = start; date <= end; date = isoPlusDays(date, 1)){
+        const dayEntries = allEntries.filter(item => {
+          const ref = item.tipo === 'despesa' ? getExpenseReferenceDate(item) : getRevenueReferenceDate(item);
+          return ref === date;
+        });
+        const saldoInicialSnapshot = cloneBalanceSnapshot(runningSnapshot);
+        const accountMovements = [];
+
+        companyKeys.forEach(companyKey => {
+          (EMPRESAS[companyKey]?.contas || []).forEach(conta => {
+            const relatedEntries = dayEntries.filter(item => getEntryCompanyKey(item) === companyKey && getEntryConta(item) === conta);
+            const entradasConta = relatedEntries
+              .filter(item => item.tipo === 'receita')
+              .reduce((acc, item) => acc + getEntryAmount(item), 0);
+            const saidasConta = relatedEntries
+              .filter(item => item.tipo === 'despesa')
+              .reduce((acc, item) => acc + getEntryAmount(item), 0);
+            const saldoInicialConta = Number(saldoInicialSnapshot?.[companyKey]?.[conta] || 0);
+            const saldoFinalConta = saldoInicialConta + entradasConta - saidasConta;
+            accountMovements.push({
+              empresa: companyKey,
+              empresaLabel: EMPRESAS[companyKey]?.label || companyKey,
+              conta,
+              saldoInicial: saldoInicialConta,
+              entradas: entradasConta,
+              saidas: saidasConta,
+              saldoFinal: saldoFinalConta,
+              hasMovement: relatedEntries.length > 0,
+              lancamentos: relatedEntries
+            });
+          });
+        });
+
+        applyEntriesToSnapshot(runningSnapshot, dayEntries);
+        const saldoFinalSnapshot = cloneBalanceSnapshot(runningSnapshot);
+        const entradas = dayEntries.filter(item => item.tipo === 'receita').reduce((acc, item) => acc + getEntryAmount(item), 0);
+        const saidas = dayEntries.filter(item => item.tipo === 'despesa').reduce((acc, item) => acc + getEntryAmount(item), 0);
+
+        rows.push({
+          data: date,
+          saldoInicial: sumSnapshotBalances(saldoInicialSnapshot),
+          entradas,
+          saidas,
+          saldoFinal: sumSnapshotBalances(saldoFinalSnapshot),
+          saldoInicialContas: saldoInicialSnapshot,
+          saldoFinalContas: saldoFinalSnapshot,
+          resumoContas: accountMovements,
+          lançamentos: dayEntries,
+          statusResumo: summarizeDayStatus(dayEntries)
+        });
+      }
+      return rows;
+    }
+
+    function setPainelFluxoDiarioCollapsed(collapsed){
+      const panel = document.getElementById('painelFluxoDiario');
+      if (!panel) return;
+      panel.classList.toggle('is-collapsed', collapsed);
+      const header = panel.querySelector('.panel-header');
+      const label = panel.querySelector('.panel-toggle-label');
+      if (header) header.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      if (label) label.textContent = collapsed ? 'Expandir' : 'Recolher';
+    }
+
+    function togglePainelFluxoDiario(event){
+      if (event && event.target && event.target.closest('.table-wrap')) return;
+      const panel = document.getElementById('painelFluxoDiario');
+      if (!panel) return;
+      setPainelFluxoDiarioCollapsed(!panel.classList.contains('is-collapsed'));
+    }
+
+    function handleTogglePainelFluxoDiario(event){
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        togglePainelFluxoDiario(event);
+      }
+    }
+
+    function renderFlowTable(){
+      const tbody = document.getElementById('tabelaFluxo');
+      const rows = getFlowRows();
+      if (!rows.length){
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sem dados no período.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(row => {
+        const contasImpactadas = (row.resumoContas || []).filter(conta => conta.hasMovement);
+        const riskMeta = getFlowRiskMeta(row, rows);
+        const relacaoLancamentos = row.lançamentos.length
+          ? row.lançamentos.map(item => `
+              <div class="detail-card">
+                <div class="detail-head">${item.tipo === 'receita' ? 'Entrada' : 'Saída'} • ${escapeHtml(getStatusLabel(item.status))} • ${escapeHtml(item.conta || '-')}</div>
+                <div class="detail-item"><span>${escapeHtml(item.descricao)}</span><strong class="${item.tipo === 'receita' ? 'entrada' : 'saida'}">R$ ${formatarValor(getEntryAmount(item))}</strong></div>
+              </div>
+            `).join('')
+          : '<span class="flow-launch-empty">Sem lançamentos no dia.</span>';
+        const relacaoContas = contasImpactadas.length
+          ? contasImpactadas.map(conta => `
+              <div class="detail-card">
+                <div class="detail-head">Conta impactada • ${escapeHtml(conta.empresaLabel)} • ${escapeHtml(conta.conta)}</div>
+                <div class="detail-item"><span>Entradas</span><strong class="entrada">R$ ${formatarValor(conta.entradas)}</strong></div>
+                <div class="detail-item"><span>Saídas</span><strong class="saida">R$ ${formatarValor(conta.saidas)}</strong></div>
+                <div class="detail-item"><span>Saldo final da conta</span><strong>R$ ${formatarValor(conta.saldoFinal)}</strong></div>
+              </div>
+            `).join('')
+          : '';
+        const movimentoResumo = row.entradas - row.saidas;
+        const relacao = `
+          <div class="flow-relation">
+            <div class="flow-relation-summary">
+              <span>Movimento líquido do dia</span>
+              <strong class="${movimentoResumo >= 0 ? 'entrada' : 'saida'}">R$ ${formatarValor(movimentoResumo)}</strong>
+            </div>
+            <div class="flow-details">${relacaoLancamentos}${relacaoContas}</div>
+          </div>`;
+        const classes = [
+          'flow-row',
+          `flow-row--${riskMeta.risk}`,
+          row.data === getTodayStr() ? 'hoje' : '',
+          isWeekend(row.data) ? 'fim-semana' : '',
+          row.saldoFinal < 0 ? 'saldo-negativo' : ''
+        ].filter(Boolean).join(' ');
+        return `
+          <tr class="${classes}">
+            <td>
+              <div class="flow-day-cell">
+                <div class="flow-day-top">
+                  <div>
+                    <div class="flow-day-date">${formatDateLabel(row.data)}</div>
+                    <div class="flow-day-weekday">${diaSemana(row.data)}</div>
+                  </div>
+                  <div class="risk-badge-inline ${riskMeta.risk}">${riskMeta.label}</div>
+                </div>
+                <div class="flow-day-note">${riskMeta.helper}</div>
+              </div>
+            </td>
+            <td>
+              <div class="flow-metric-card">
+                <div class="flow-metric-label">Saldo inicial</div>
+                <div class="flow-metric-value">R$ ${formatarValor(row.saldoInicial)}</div>
+                <div class="flow-metric-helper">Ponto de partida do dia.</div>
+              </div>
+            </td>
+            <td>
+              <div class="flow-metric-card">
+                <div class="flow-metric-label">Entradas</div>
+                <div class="flow-metric-value entrada">R$ ${formatarValor(row.entradas)}</div>
+                <div class="flow-metric-helper">Leitura consolidada por status do dia.</div>
+              </div>
+            </td>
+            <td>
+              <div class="flow-metric-card">
+                <div class="flow-metric-label">Saídas</div>
+                <div class="flow-metric-value saida">R$ ${formatarValor(row.saidas)}</div>
+                <div class="flow-metric-helper">Saídas do dia com leitura consolidada por status.</div>
+              </div>
+            </td>
+            <td>
+              <div class="flow-metric-card final">
+                <div class="flow-metric-label">Saldo final</div>
+                <div class="flow-metric-value ${row.saldoFinal >= 0 ? 'positive' : 'negative'}">R$ ${formatarValor(row.saldoFinal)}</div>
+                <div class="flow-metric-helper">${riskMeta.helper}</div>
+              </div>
+            </td>
+            <td>${relacao}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function drawChart(){
+      const canvas = document.getElementById('fluxoChart');
+      const ctx = canvas.getContext('2d');
+      const rows = getFlowRows();
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const width = Math.max(320, rect.width || 800);
+      const isMobile = window.matchMedia('(max-width:700px)').matches;
+      const height = isMobile ? 260 : 360;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      ctx.clearRect(0,0,width,height);
+
+      if (!rows.length) return;
+
+      const padding = { top: 28, right: 26, bottom: 48, left: isMobile ? 56 : 70 };
+      const chartW = width - padding.left - padding.right;
+      const chartH = height - padding.top - padding.bottom;
+
+      const valores = rows.flatMap(row => [row.entradas, row.saidas, row.saldoFinal, row.saldoInicial]);
+      const maxVal = Math.max(...valores, 0);
+      const minVal = Math.min(...valores, 0);
+      const range = Math.max(1, maxVal - minVal);
+      const y = value => padding.top + (maxVal - value) / range * chartH;
+
+      ctx.strokeStyle = 'rgba(255,255,255,.08)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++){
+        const yy = padding.top + chartH * i / 4;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, yy);
+        ctx.lineTo(width - padding.right, yy);
+        ctx.stroke();
+
+        const val = maxVal - range * i / 4;
+        ctx.fillStyle = '#8b949e';
+        ctx.font = (isMobile ? '10px' : '12px') + ' JetBrains Mono';
+        ctx.fillText('R$ ' + formatarValor(val), 8, yy + 4);
+      }
+
+      const stepX = rows.length > 1 ? chartW / (rows.length - 1) : chartW / 2;
+      rows.forEach((row, idx) => {
+        const x = padding.left + idx * stepX;
+        row.__plotX = x;
+        row.__plotY = y(row.saldoFinal);
+        const shouldLabel = !isMobile || rows.length <= 6 || idx % 2 === 0 || idx === rows.length - 1;
+        if (shouldLabel){
+          ctx.fillStyle = '#8b949e';
+          ctx.font = isMobile ? '10px Plus Jakarta Sans' : '11px Plus Jakarta Sans';
+          ctx.fillText(formatShortDate(row.data), x - (isMobile ? 12 : 16), height - 18);
+        }
+      });
+
+      function drawBars(key, color){
+        const barWidth = Math.max(6, Math.min(20, stepX * .2));
+        rows.forEach((row, idx) => {
+          const x = padding.left + idx * stepX;
+          const value = Number(row[key] || 0);
+          const baseY = y(0);
+          const topY = y(value);
+          ctx.fillStyle = color;
+          ctx.fillRect(
+            x + (key === 'entradas' ? -barWidth - 3 : 3),
+            Math.min(baseY, topY),
+            barWidth,
+            Math.abs(baseY - topY)
+          );
+        });
+      }
+
+      drawBars('entradas', 'rgba(63,185,165,.9)');
+      drawBars('saidas', 'rgba(248,81,73,.9)');
+
+      ctx.strokeStyle = '#58a6ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      rows.forEach((row, idx) => {
+        const x = padding.left + idx * stepX;
+        const py = y(row.saldoFinal);
+        if (idx === 0) ctx.moveTo(x, py);
+        else ctx.lineTo(x, py);
+      });
+      ctx.stroke();
+
+      rows.forEach(row => {
+        ctx.beginPath();
+        ctx.arc(row.__plotX, row.__plotY, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#58a6ff';
+        ctx.fill();
+      });
+
+      const currentSummary = rows.find(row => row.data === getTodayStr()) || rows[0];
+      updateFlowDaySummary(currentSummary);
+    }
+
+    function getNearestFlowPoint(canvas, clientX){
+      const rows = getFlowRows();
+      if (!rows.length) return null;
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = clientX - rect.left;
+      let closest = rows[0];
+      let min = Math.abs((closest.__plotX || 0) - mouseX);
+      rows.forEach(row => {
+        const diff = Math.abs((row.__plotX || 0) - mouseX);
+        if (diff < min){
+          min = diff;
+          closest = row;
+        }
+      });
+      const threshold = Math.max(18, rect.width / Math.max(rows.length * 3, 12));
+      return min <= threshold ? { row: closest } : null;
+    }
+
+    function renderFlowTooltip(row, canvas){
+      const tooltip = document.getElementById('chartTooltip');
+      const launches = row.lançamentos || [];
+      const contasImpactadas = (row.resumoContas || []).filter(conta => conta.hasMovement);
+      const statusResumo = row.statusResumo || summarizeDayStatus(row.lançamentos || []);
+      tooltip.innerHTML = `
+        <div class="chart-tooltip-title">${formatDateLabel(row.data)} • ${diaSemana(row.data)}</div>
+        <div class="chart-tooltip-grid">
+          <div class="chart-tooltip-row"><span>Saldo inicial</span><strong>R$ ${formatarValor(row.saldoInicial)}</strong></div>
+          <div class="chart-tooltip-row"><span>Entradas previstas</span><strong class="entrada">R$ ${formatarValor(statusResumo.entradas.previsto)}</strong></div>
+          <div class="chart-tooltip-row"><span>Entradas provisionadas</span><strong class="entrada">R$ ${formatarValor(statusResumo.entradas.provisionado)}</strong></div>
+          <div class="chart-tooltip-row"><span>Entradas realizadas</span><strong class="entrada">R$ ${formatarValor(statusResumo.entradas.realizado)}</strong></div>
+          <div class="chart-tooltip-row"><span>Saídas previstas</span><strong class="saida">R$ ${formatarValor(statusResumo.saidas.previsto)}</strong></div>
+          <div class="chart-tooltip-row"><span>Saídas provisionadas</span><strong class="saida">R$ ${formatarValor(statusResumo.saidas.provisionado)}</strong></div>
+          <div class="chart-tooltip-row"><span>Saídas realizadas</span><strong class="saida">R$ ${formatarValor(statusResumo.saidas.realizado)}</strong></div>
+          <div class="chart-tooltip-row"><span>Saldo final</span><strong>R$ ${formatarValor(row.saldoFinal)}</strong></div>
+        </div>
+        <div class="flow-launch-list">
+          ${launches.length ? launches.map(item => `
+            <div class="flow-launch-item">
+              <span>${escapeHtml(item.descricao)} • ${escapeHtml(item.conta || '-')}</span>
+              <strong class="${item.tipo === 'receita' ? 'entrada' : 'saida'}">R$ ${formatarValor(getEntryAmount(item))}</strong>
+            </div>
+          `).join('') : '<div class="flow-launch-empty">Sem lançamentos nesse dia.</div>'}
+          ${contasImpactadas.length ? contasImpactadas.map(conta => `
+            <div class="flow-launch-item">
+              <span>${escapeHtml(conta.empresaLabel)} • ${escapeHtml(conta.conta)} • saldo final</span>
+              <strong>R$ ${formatarValor(conta.saldoFinal)}</strong>
+            </div>
+          `).join('') : ''}
+        </div>
+      `;
+      const rect = canvas.getBoundingClientRect();
+      tooltip.style.left = `${rect.left + window.scrollX + (row.__plotX || 0)}px`;
+      tooltip.style.top = `${rect.top + window.scrollY + (row.__plotY || 0) - 12}px`;
+      tooltip.classList.add('active');
+    }
+
+    function hideFlowTooltip(){
+      document.getElementById('chartTooltip').classList.remove('active');
+    }
+
+
+    function updateFlowDaySummary(row){
+      const card = document.getElementById('flowDaySummary');
+      if (!card || !row) return;
+      const launches = row.lançamentos || [];
+      const allRows = getFlowRows();
+      const riskMeta = getFlowRiskMeta(row, allRows);
+      card.hidden = false;
+      document.getElementById('flowDaySummaryTitle').textContent = `${formatDateLabel(row.data)} • ${diaSemana(row.data)}`;
+      const contasImpactadas = (row.resumoContas || []).filter(conta => conta.hasMovement);
+      const statusResumo = row.statusResumo || summarizeDayStatus(launches);
+      document.getElementById('flowDaySummarySubtitle').textContent = `Resumo diário com separação por status, ${launches.length} lançamento(s) e ${contasImpactadas.length} conta(s) impactada(s).`;
+      document.getElementById('flowDaySummarySaldoInicial').textContent = `R$ ${formatarValor(row.saldoInicial)}`;
+      document.getElementById('flowDaySummaryEntradas').textContent = `R$ ${formatarValor(row.entradas)}`;
+      document.getElementById('flowDaySummarySaidas').textContent = `R$ ${formatarValor(row.saidas)}`;
+      const saldoEl = document.getElementById('flowDaySummarySaldo');
+      saldoEl.textContent = `R$ ${formatarValor(row.saldoFinal)}`;
+      saldoEl.className = `flow-day-summary-metric-value ${row.saldoFinal >= 0 ? 'positive' : 'negative'}`;
+      document.getElementById('flowDaySummaryStatusText').textContent = `${riskMeta.helper} • Entradas: previsto R$ ${formatarValor(statusResumo.entradas.previsto)}, provisionado R$ ${formatarValor(statusResumo.entradas.provisionado)}, realizado R$ ${formatarValor(statusResumo.entradas.realizado)} • Saídas: previsto R$ ${formatarValor(statusResumo.saidas.previsto)}, provisionado R$ ${formatarValor(statusResumo.saidas.provisionado)}, realizado R$ ${formatarValor(statusResumo.saidas.realizado)}`;
+      const riskEl = document.getElementById('flowDaySummaryRisk');
+      riskEl.className = `risk-badge-inline ${riskMeta.risk}`;
+      riskEl.textContent = riskMeta.label;
+      const lancamentosHtml = launches.length
+        ? launches.map(item => `
+            <div class="flow-day-summary-item">
+              <span>${escapeHtml(item.tipo === 'receita' ? 'Entrada' : 'Saída')} • ${escapeHtml(item.descricao)} • ${escapeHtml(item.conta || '-')} • ${escapeHtml(getStatusLabel(item.status))}</span>
+              <strong class="${item.tipo === 'receita' ? 'entrada' : 'saida'}">R$ ${formatarValor(getEntryAmount(item))}</strong>
+            </div>
+          `).join('')
+        : '<div class="flow-day-summary-empty">Sem lançamentos nesse dia.</div>';
+      const contasHtml = contasImpactadas.length
+        ? contasImpactadas.map(conta => `
+            <div class="flow-day-summary-item">
+              <span>${escapeHtml(conta.empresaLabel)} • ${escapeHtml(conta.conta)} • entradas R$ ${formatarValor(conta.entradas)} • saídas R$ ${formatarValor(conta.saidas)}</span>
+              <strong>Saldo final R$ ${formatarValor(conta.saldoFinal)}</strong>
+            </div>
+          `).join('')
+        : '';
+      document.getElementById('flowDaySummaryList').innerHTML = lancamentosHtml + contasHtml;
+    }
+
+    function desfazerProvisionamentoDespesa(id){
+      if (!isAdmin()) return;
+      const item = state.despesas.find(d => d.id === id);
+      if (!item || item.status !== 'provisionado') return;
+      item.status = 'previsto';
+      item.dataEfetiva = null;
+      state.horaAtualizacao = normalizeTime(getNowHHMM());
+      saveState();
+      updateAll();
+      toast('Provisão desfeita com sucesso.', 'success');
+    }
+
+    function renderLaunches(){
+      const tbody = document.getElementById('tabelaLancamentos');
+      let items = getCompanyEntries().filter(item => item.origem !== 'emergencial');
+
+      if (ui.launchFilter === 'despesas') items = items.filter(item => item.tipo === 'despesa');
+      if (ui.launchFilter === 'receitas') items = items.filter(item => item.tipo === 'receita');
+      if (ui.launchFilter === 'pendentes') items = items.filter(item => isOpenStatus(item.status));
+      if (ui.launchFilter === 'finalizados') items = items.filter(item => statusFinalizado(item));
+
+      if (ui.searchTerm) {
+        const term = ui.searchTerm.toLowerCase();
+        items = items.filter(item => [
+          item.descricao,
+          item.empresa,
+          item.conta,
+          item.status,
+          item.observacao
+        ].join(' ').toLowerCase().includes(term));
+      }
+
+      items.sort((a,b) => {
+        const da = a.tipo === 'despesa' ? getExpenseReferenceDate(a) : getRevenueReferenceDate(a);
+        const db = b.tipo === 'despesa' ? getExpenseReferenceDate(b) : getRevenueReferenceDate(b);
+        return db.localeCompare(da);
+      });
+
+      if (!items.length){
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Nenhum lançamento encontrado.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = items.map(item => {
+        const isFinal = statusFinalizado(item);
+        const canMutate = !isCliente();
+        const valor = item.tipo === 'despesa'
+          ? Number(item.valorRestante || item.valorOriginal || 0)
+          : Number(item.valor || 0);
+        return `
+          <tr>
+            <td>${escapeHtml(EMPRESAS[item.empresa]?.label || '-')}</td>
+            <td><span class="status-badge ${item.tipo === 'despesa' ? 'vencida' : 'realizar'}">${item.tipo}</span></td>
+            <td>
+              <div>${escapeHtml(item.descricao)}</div>
+            </td>
+            <td class="value ${item.tipo === 'despesa' ? 'saida' : 'entrada'}">R$ ${formatarValor(valor)}</td>
+            <td>${formatDateLabel(item.tipo === 'despesa' ? item.vencimento : item.data)}</td>
+            <td><span class="status-badge ${escapeHtml(getStatusLabel(item.status))}">${escapeHtml(getStatusLabel(item.status))}</span></td>
+            <td>${item.tipo === 'despesa' ? `<span class="tag ${priorityClass(item)}">${priorityLabel(item.prioridade)}</span>` : '<span class="small muted">—</span>'}</td>
+            <td>
+              <div class="action-group">
+                <button class="btn btn-secondary btn-small ${canMutate ? '' : 'admin-only'}" onclick="editarLancamento(${item.id}, '${item.tipo}', '${item.origem || 'lancamentos'}')">Editar</button>
+                <button class="btn btn-danger btn-small ${canMutate ? '' : 'admin-only'}" onclick="excluirLancamento(${item.id}, '${item.tipo}', ${isFinal ? 'true' : 'false'}, '${item.origem || 'lancamentos'}')">Excluir</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderEmergenciais(){
+      const select = document.getElementById('emergCompetencia');
+      const resumo = document.getElementById('emergenciaisResumo');
+      const tbody = document.getElementById('tabelaEmergenciais');
+      if (!select || !resumo || !tbody) return;
+
+      const itemsBase = getEmergencyEntries();
+      const competencias = Array.from(new Set(itemsBase.map(getEmergencyCompetence))).sort().reverse();
+      const fallback = getTodayStr().slice(0,7);
+      if (!ui.emergCompetencia || !competencias.includes(ui.emergCompetencia)) ui.emergCompetencia = competencias[0] || fallback;
+
+      select.innerHTML = (competencias.length ? competencias : [fallback]).map(comp => `<option value="${comp}" ${comp === ui.emergCompetencia ? 'selected' : ''}>${formatCompetenceLabel(comp)}</option>`).join('');
+      const items = itemsBase.filter(item => getEmergencyCompetence(item) === ui.emergCompetencia).sort((a,b) => (b.dataEfetiva || b.vencimento || '').localeCompare(a.dataEfetiva || a.vencimento || ''));
+      const total = items.reduce((acc, item) => acc + Number(item.valorPago || item.valorOriginal || 0), 0);
+      const qtd = items.length;
+      const ticket = qtd ? total / qtd : 0;
+      const empresasAtivas = new Set(items.map(item => item.empresa)).size;
+
+      resumo.innerHTML = `
+        <div class="kpi-card red"><div class="kpi-label">Gasto emergencial</div><div class="kpi-value">R$ ${formatarValor(total)}</div><div class="kpi-trend">${formatCompetenceLabel(ui.emergCompetencia)}</div></div>
+        <div class="kpi-card blue"><div class="kpi-label">Quantidade</div><div class="kpi-value">${qtd}</div><div class="kpi-trend">Lançamentos na competência</div></div>
+        <div class="kpi-card teal"><div class="kpi-label">Ticket médio</div><div class="kpi-value">R$ ${formatarValor(ticket)}</div><div class="kpi-trend">Média por lançamento</div></div>
+        <div class="kpi-card green"><div class="kpi-label">Empresas com ocorrência</div><div class="kpi-value">${empresasAtivas}</div><div class="kpi-trend">Bases com emergenciais</div></div>
+      `;
+
+      if (!items.length){
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Nenhuma despesa emergencial lançada nesta competência.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = items.map(item => {
+        const isFinal = statusFinalizado({ ...item, tipo:'despesa' });
+        const valor = Number(item.valorPago || item.valorOriginal || 0);
+        return `
+          <tr>
+            <td>${escapeHtml(EMPRESAS[item.empresa]?.label || '-')}</td>
+            <td><div>${escapeHtml(item.descricao)}</div><div class="small muted">${escapeHtml(item.observacao || 'Despesa emergencial')}</div></td>
+            <td class="value saida">R$ ${formatarValor(valor)}</td>
+            <td>${formatDateLabel(item.dataEfetiva || item.vencimento)}</td>
+            <td><span class="status-badge ${escapeHtml(getStatusLabel(item.status))}">${escapeHtml(getStatusLabel(item.status))}</span></td>
+            <td>${formatCompetenceLabel(getEmergencyCompetence(item))}</td>
+            <td><div class="action-group"><button class="btn btn-secondary btn-small ${isCliente() ? 'admin-only' : ''}" onclick="editarLancamento(${item.id}, 'despesa', 'emergencial')">Editar</button><button class="btn btn-danger btn-small ${isCliente() ? 'admin-only' : ''}" onclick="excluirLancamento(${item.id}, 'despesa', ${isFinal ? 'true' : 'false'}, 'emergencial')">Excluir</button></div></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function getWeekBounds(){
+      const today = new Date(getTodayStr() + 'T12:00:00');
+      const start = new Date(today);
+      const day = start.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      start.setDate(start.getDate() + diff + ui.weekOffset * 7);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 6);
+      return {
+        start: start.toISOString().slice(0,10),
+        end: end.toISOString().slice(0,10)
+      };
+    }
+
+    function renderWeek(){
+      const { start, end } = getWeekBounds();
+      const grid = document.getElementById('semanaGrid');
+      const summary = document.getElementById('semanaResumo');
+      document.getElementById('semanaAtual').textContent = `${formatDateLabel(start)} a ${formatDateLabel(end)}`;
+      const rows = [];
+      for (let date = start; date <= end; date = isoPlusDays(date, 1)){
+        const items = getCompanyEntries().filter(item => {
+          const ref = item.tipo === 'despesa' ? getExpenseReferenceDate(item) : getRevenueReferenceDate(item);
+          return ref === date;
+        });
+        const entradas = items.filter(item => item.tipo === 'receita').reduce((acc, item) => acc + Number(item.valor || 0), 0);
+        const saidas = items.filter(item => item.tipo === 'despesa').reduce((acc, item) => acc + Number(item.valorRestante || item.valorOriginal || 0), 0);
+        rows.push({ date, items, entradas, saidas });
+      }
+
+      grid.innerHTML = rows.map(row => {
+        const saldo = row.entradas - row.saidas;
+        const classes = [
+          row.date === getTodayStr() ? 'today' : '',
+          saldo < 0 ? 'negative' : '',
+          isWeekend(row.date) ? 'weekend' : ''
+        ].filter(Boolean).join(' ');
+        return `
+          <div class="day-card ${classes}">
+            <div class="day-head">
+              <div>
+                <div class="day-name">${diaSemana(row.date)}</div>
+                <div class="day-date">${formatShortDate(row.date)}</div>
+              </div>
+              <div class="tag ${saldo < 0 ? 'critico' : 'baixo'}">${saldo < 0 ? 'Saída maior' : 'Controle'}</div>
+            </div>
+            <div class="day-lines">
+              <div>Entradas: <strong class="entrada">R$ ${formatarValor(row.entradas)}</strong></div>
+              <div>Saídas: <strong class="saida">R$ ${formatarValor(row.saidas)}</strong></div>
+              <div>Saldo do dia: <strong class="${saldo >= 0 ? 'positive' : 'negative'}">R$ ${formatarValor(saldo)}</strong></div>
+            </div>
+            <div class="day-items">
+              ${row.items.length ? row.items.map(item => `
+                <div>
+                  <span>${escapeHtml(item.descricao)}</span>
+                  <strong class="${item.tipo === 'receita' ? 'entrada' : 'saida'}">R$ ${formatarValor(item.tipo === 'despesa' ? (item.valorRestante || item.valorOriginal || 0) : item.valor || 0)}</strong>
+                </div>
+              `).join('') : '<div>Sem lançamentos</div>'}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const totalEntradas = rows.reduce((acc, row) => acc + row.entradas, 0);
+      const totalSaidas = rows.reduce((acc, row) => acc + row.saidas, 0);
+      const diasComMovimento = rows.filter(row => row.items.length).length;
+
+      summary.innerHTML = `
+        <div class="kpi-card green">
+          <div class="kpi-label">Entradas da Semana</div>
+          <div class="kpi-value">R$ ${formatarValor(totalEntradas)}</div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-label">Saídas da Semana</div>
+          <div class="kpi-value">R$ ${formatarValor(totalSaidas)}</div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="kpi-label">Saldo da Semana</div>
+          <div class="kpi-value ${totalEntradas - totalSaidas >= 0 ? 'positive' : 'negative'}">R$ ${formatarValor(totalEntradas - totalSaidas)}</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-label">Dias com Movimento</div>
+          <div class="kpi-value">${diasComMovimento}</div>
+        </div>
+      `;
+    }
+
+    function renderCashView(){
+      const grid = document.getElementById('caixaGrid');
+      const visibleCompanies = ui.companyView === 'ambas'
+        ? Object.entries(EMPRESAS)
+        : Object.entries(EMPRESAS).filter(([empresaKey]) => empresaKey === ui.companyView);
+
+      const totalSistemaAtual = getSystemCashTotal();
+      const totalSistemaProjetado = getProjectedClosingBalance(Object.keys(EMPRESAS));
+
+      const topCard = ui.companyView === 'ambas'
+        ? `
+          <div class="company-card full-span">
+            <div class="company-head">
+              <h3>Consolidado Geral do Sistema</h3>
+              <div class="small muted">Saldo consolidado atual: <strong class="value">R$ ${formatarValor(totalSistemaAtual)}</strong></div>
+              <div class="small muted">Saldo projetado final: <strong class="${totalSistemaProjetado >= 0 ? 'headline-positive' : 'headline-negative'}">R$ ${formatarValor(totalSistemaProjetado)}</strong></div>
+              <div class="small muted">Base da projeção: soma dos saldos por conta respeitando a conta vinculada de cada lançamento.</div>
+            </div>
+          </div>
+        `
+        : '';
+
+      const companyCards = visibleCompanies.map(([empresaKey, empresa]) => {
+        const totalAtual = sumCompanyCash(empresaKey);
+        const totalProjetado = getProjectedClosingBalance([empresaKey]);
+
+        const accountCards = empresa.contas.map(conta => {
+          const account = state.cashBalances?.[empresaKey]?.[conta] || { saldo: 0, atualizadoEm: getTodayStr() + 'T' + getNowHHMM() };
+          const atualizadoEm = account.atualizadoEm || '';
+          const dataAtualizacao = atualizadoEm ? formatDateLabel(atualizadoEm) : formatDateLabel(getTodayStr());
+          const horarioAtualizacao = atualizadoEm && atualizadoEm.includes('T') ? atualizadoEm.split('T')[1].slice(0,5) : normalizeTime(getNowHHMM());
+
+          return `
+            <div class="account-card">
+              <div>
+                <div class="account-name">${escapeHtml(conta)}</div>
+                <div class="account-meta">Saldo individual da conta</div>
+              </div>
+              <div>
+                <div class="small muted">Atualizado em</div>
+                <div class="account-value">${dataAtualizacao}</div>
+                <div class="small muted">${horarioAtualizacao}</div>
+              </div>
+              <div>
+                <div class="small muted">Saldo atual</div>
+                <div class="account-value">R$ ${formatarValor(Number(account.saldo || 0))}</div>
+              </div>
+              <div class="action-group">
+                <button class="btn btn-secondary btn-small ${isCliente() ? 'admin-only' : ''}" onclick="editarSaldoConta('${empresaKey}','${conta}')">Editar</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="company-card">
+            <div class="company-head">
+              <h3>${empresa.label}</h3>
+              <div class="small muted">Consolidado atual: <strong class="value">R$ ${formatarValor(totalAtual)}</strong></div>
+              <div class="small muted">Projetado no fechamento do período: <strong class="${totalProjetado >= 0 ? 'headline-positive' : 'headline-negative'}">R$ ${formatarValor(totalProjetado)}</strong></div>
+            </div>
+            <div class="account-list">${accountCards}</div>
+          </div>
+        `;
+      }).join('');
+
+      grid.innerHTML = topCard + companyCards;
+    }
+
+    function saveMetaInputs(){
+      if (!isAdmin()) return;
+      state.horaAtualizacao = normalizeTime(document.getElementById('horaAtualizacao').value);
+      saveState();
+      updateAll();
+    }
+
+    function abrirModalLancamento(tipo, origem='lancamentos'){
+      if (!isAdmin()) return;
+      const isEmergencial = origem === 'emergencial';
+      document.getElementById('modalLancamentoTitulo').textContent = isEmergencial ? 'Nova Despesa Emergencial' : (tipo === 'despesa' ? 'Nova Despesa' : 'Nova Receita');
+      document.getElementById('lancId').value = '';
+      document.getElementById('lancTipo').value = tipo;
+      document.getElementById('lancOrigem').value = origem;
+      document.getElementById('lancEmpresa').value = ui.companyView === 'ambas' ? 'malut-pneus' : ui.companyView;
+      document.getElementById('lancDescricao').value = '';
+      document.getElementById('lancValor').value = '';
+      document.getElementById('lancData').value = getTodayStr();
+      document.getElementById('lancDataEfetiva').value = isEmergencial ? getTodayStr() : '';
+      document.getElementById('lancObservacao').value = '';
+      document.getElementById('lancStatusGroup').style.display = '';
+      document.getElementById('lancPrioridadeGroup').style.display = tipo === 'despesa' ? '' : 'none';
+      document.getElementById('lancStatus').innerHTML = tipo === 'despesa'
+        ? `
+          <option value="previsto">Previsto</option>
+          <option value="provisionado">Provisionado</option>
+          <option value="realizado">Realizado</option>
+        `
+        : `
+          <option value="previsto">Previsto</option>
+          <option value="provisionado">Provisionado</option>
+          <option value="realizado">Realizado</option>
+        `;
+      document.getElementById('lancStatus').value = 'previsto';
+      document.getElementById('lancPrioridade').value = isEmergencial ? 'critico' : 'aclassificar';
+      atualizarDestaqueEmpresaFormulario();
+      abrirModal('modalLancamento');
+    }
+
+    function abrirModalEmergencial(){
+      abrirModalLancamento('despesa', 'emergencial');
+    }
+
+    function atualizarDestaqueEmpresaFormulario(){
+      const empresaKey = document.getElementById('lancEmpresa').value;
+      document.getElementById('empresaSelecionadaTexto').textContent = `Você está lançando em: ${(EMPRESAS[empresaKey]?.label || '').toUpperCase()}`;
+    }
+
+    function salvarLancamento(){
+      if (!isAdmin()) return;
+      const tipo = document.getElementById('lancTipo').value;
+      const origem = document.getElementById('lancOrigem').value || 'lancamentos';
+      const id = Number(document.getElementById('lancId').value || Date.now());
+      const empresa = document.getElementById('lancEmpresa').value;
+      const descricao = document.getElementById('lancDescricao').value.trim();
+      const valor = parseMoeda(document.getElementById('lancValor').value);
+      const data = document.getElementById('lancData').value;
+      const dataEfetiva = document.getElementById('lancDataEfetiva').value || null;
+      const status = document.getElementById('lancStatus').value;
+      const prioridade = tipo === 'despesa' ? priorityClass({ prioridade: document.getElementById('lancPrioridade').value }) : null;
+      const observacao = document.getElementById('lancObservacao').value.trim();
+
+      if (!descricao || !valor || !data){
+        toast('Preencha os campos obrigatórios.', 'error');
+        return;
+      }
+
+      if (tipo === 'despesa'){
+        const isEmergencial = origem === 'emergencial';
+        const item = {
+          id,
+          empresa,
+          conta: guessConta(empresa),
+          descricao,
+          valorOriginal: valor,
+          valorRestante: status === 'realizado' ? 0 : valor,
+          valorPago: status === 'realizado' ? valor : 0,
+          vencimento: data,
+          dataEfetiva: isEmergencial ? (dataEfetiva || data) : dataEfetiva,
+          prioridade: isEmergencial ? 'critico' : prioridade,
+          status,
+          observacao,
+          criadoEm: new Date().toISOString(),
+          origem
+        };
+        const list = isEmergencial ? state.emergenciais : state.despesas;
+        const idx = list.findIndex(i => i.id === id);
+        if (idx >= 0) list[idx] = item;
+        else list.push(item);
+      } else {
+        const item = {
+          id,
+          empresa,
+          conta: guessConta(empresa),
+          descricao,
+          valor,
+          data,
+          dataEfetiva,
+          status,
+          prioridade,
+          observacao,
+          criadoEm: new Date().toISOString(),
+          origem
+        };
+        const idx = state.receitas.findIndex(i => i.id === id);
+        if (idx >= 0) state.receitas[idx] = item;
+        else state.receitas.push(item);
+      }
+
+      state.horaAtualizacao = normalizeTime(getNowHHMM());
+      saveState();
+      fecharModal('modalLancamento');
+      updateAll();
+      toast(origem === 'emergencial' ? 'Despesa emergencial salva com sucesso.' : 'Lançamento salvo com sucesso.', 'success');
+    }
+
+    function editarLancamento(id, tipo, origem='lancamentos'){
+      if (!isAdmin()) return;
+      const list = tipo === 'receita' ? state.receitas : (origem === 'emergencial' ? state.emergenciais : state.despesas);
+      const item = list.find(i => i.id === id);
+      if (!item) return;
+
+      const isFinal = isCompletedStatus(item.status);
+      if (isFinal){
+        ui.pendingPasswordAction = { action:'editar', id, tipo, origem };
+        document.getElementById('senhaProtecao').value = '';
+        document.getElementById('senhaAcaoDescricao').textContent = 'Editar lançamento realizado';
+        abrirModal('modalSenha');
+        return;
+      }
+
+      openEditLaunch(item, tipo, origem);
+    }
+
+    function openEditLaunch(item, tipo, origem='lancamentos'){
+      document.getElementById('modalLancamentoTitulo').textContent = 'Editar ' + (origem === 'emergencial' ? 'Despesa Emergencial' : (tipo === 'despesa' ? 'Despesa' : 'Receita'));
+      document.getElementById('lancId').value = item.id;
+      document.getElementById('lancTipo').value = tipo;
+      document.getElementById('lancOrigem').value = origem;
+      document.getElementById('lancEmpresa').value = item.empresa;
+      document.getElementById('lancDescricao').value = item.descricao;
+      document.getElementById('lancValor').value = formatarValor(tipo === 'despesa' ? item.valorOriginal : item.valor);
+      document.getElementById('lancData').value = tipo === 'despesa' ? item.vencimento : item.data;
+      document.getElementById('lancDataEfetiva').value = item.dataEfetiva || '';
+      document.getElementById('lancObservacao').value = item.observacao || '';
+      document.getElementById('lancStatusGroup').style.display = '';
+      document.getElementById('lancPrioridadeGroup').style.display = tipo === 'despesa' ? '' : 'none';
+      document.getElementById('lancStatus').innerHTML = tipo === 'despesa'
+        ? `
+          <option value="previsto">Previsto</option>
+          <option value="provisionado">Provisionado</option>
+          <option value="realizado">Realizado</option>
+        `
+        : `
+          <option value="previsto">Previsto</option>
+          <option value="provisionado">Provisionado</option>
+          <option value="realizado">Realizado</option>
+        `;
+      document.getElementById('lancStatus').value = (['previsto','provisionado','realizado'].includes(item.status) ? item.status : 'previsto');
+      document.getElementById('lancPrioridade').value = tipo === 'receita' ? 'aclassificar' : priorityClass(item);
+      atualizarDestaqueEmpresaFormulario();
+      abrirModal('modalLancamento');
+    }
+
+    function excluirLancamento(id, tipo, isFinal, origem='lancamentos'){
+      if (!isAdmin()) return;
+      if (isFinal){
+        ui.pendingPasswordAction = { action:'excluir', id, tipo, origem };
+        document.getElementById('senhaProtecao').value = '';
+        document.getElementById('senhaAcaoDescricao').textContent = 'Excluir lançamento realizado';
+        abrirModal('modalSenha');
+        return;
+      }
+      removeLaunch(id, tipo, origem);
+    }
+
+    function removeLaunch(id, tipo, origem='lancamentos'){
+      if (tipo === 'despesa'){
+        if (origem === 'emergencial') state.emergenciais = (state.emergenciais || []).filter(i => i.id !== id);
+        else state.despesas = state.despesas.filter(i => i.id !== id);
+      } else {
+        state.receitas = state.receitas.filter(i => i.id !== id);
+      }
+      state.horaAtualizacao = normalizeTime(getNowHHMM());
+      saveState();
+      updateAll();
+      toast('Lançamento removido com sucesso.', 'warning');
+    }
+
+    function validarSenhaProtecao(){
+      const senha = document.getElementById('senhaProtecao').value.trim();
+      if (senha !== PROTECTION_PASSWORD){
+        toast('Senha inválida.', 'error');
+        return;
+      }
+      fecharModal('modalSenha');
+      if (!ui.pendingPasswordAction) return;
+      const { action, id, tipo, origem='lancamentos' } = ui.pendingPasswordAction;
+      ui.pendingPasswordAction = null;
+
+      if (action === 'editar'){
+        const item = (tipo === 'receita' ? state.receitas : (origem === 'emergencial' ? state.emergenciais : state.despesas)).find(i => i.id === id);
+        if (item) openEditLaunch(item, tipo, origem);
+      } else if (action === 'excluir'){
+        removeLaunch(id, tipo, origem);
+      }
+    }
+
+    function abrirProvisionarDespesa(id){
+      if (!isAdmin()) return;
+      const item = state.despesas.find(i => i.id === id);
+      if (!item) return;
+      ui.actionContext = { type: 'provisionar', id };
+      document.getElementById('modalPagamentoTitulo').textContent = 'Provisionar lançamento';
+      document.getElementById('acaoDescricao').textContent = item.descricao;
+      document.getElementById('acaoData').value = item.dataEfetiva || item.vencimento;
+      document.getElementById('acaoValor').value = formatarValor(item.valorRestante || item.valorOriginal || 0);
+      document.getElementById('acaoHelper').textContent = 'Informe a data planejada e confirme o valor provisionado.';
+      abrirModal('modalPagamento');
+    }
+
+    function abrirRegistrarPagamento(id){
+      if (!isAdmin()) return;
+      const item = state.despesas.find(i => i.id === id);
+      if (!item) return;
+      ui.actionContext = { type: 'pagar', id };
+      document.getElementById('modalPagamentoTitulo').textContent = 'Registrar realização';
+      document.getElementById('acaoDescricao').textContent = item.descricao;
+      document.getElementById('acaoData').value = getTodayStr();
+      document.getElementById('acaoValor').value = formatarValor(item.valorRestante || item.valorOriginal || 0);
+      document.getElementById('acaoHelper').textContent = 'Ao registrar a efetivação, o lançamento passa para realizado.';
+      abrirModal('modalPagamento');
+    }
+
+    function confirmarAcaoLancamento(){
+      if (!isAdmin() || !ui.actionContext) return;
+      const valor = parseMoeda(document.getElementById('acaoValor').value);
+      const data = document.getElementById('acaoData').value;
+      if (!valor || !data){
+        toast('Informe data e valor.', 'error');
+        return;
+      }
+
+      if (ui.actionContext.type === 'provisionar'){
+        const item = state.despesas.find(i => i.id === ui.actionContext.id);
+        if (!item) return;
+        item.status = 'provisionado';
+        item.dataEfetiva = data;
+      }
+
+      if (ui.actionContext.type === 'pagar'){
+        const item = state.despesas.find(i => i.id === ui.actionContext.id);
+        if (!item) return;
+        item.valorPago = Number(item.valorPago || 0) + valor;
+        item.valorRestante = Math.max(0, Number(item.valorRestante || item.valorOriginal || 0) - valor);
+        item.dataEfetiva = data;
+        item.status = 'realizado';
+        item.valorRestante = 0;
+      }
+
+      state.horaAtualizacao = normalizeTime(getNowHHMM());
+      saveState();
+      fecharModal('modalPagamento');
+      updateAll();
+      toast('Ação registrada com sucesso.', 'success');
+    }
+
+    function editarSaldoConta(companyKey, conta){
+      if (!isAdmin()) return;
+      const current = state.cashBalances[companyKey][conta];
+      const value = prompt(`Informe o novo saldo para ${EMPRESAS[companyKey].label} • ${conta}`, formatarValor(current.saldo));
+      if (value === null) return;
+      const saldo = parseMoeda(value);
+      state.cashBalances[companyKey][conta] = {
+        saldo,
+        atualizadoEm: getTodayStr() + 'T' + normalizeTime(getNowHHMM())
+      };
+      state.horaAtualizacao = normalizeTime(getNowHHMM());
+      saveState();
+      updateAll();
+      toast('Saldo da conta atualizado.', 'success');
+    }
+
+    function abrirModal(id){
+      document.getElementById(id).classList.add('active');
+    }
+
+    function fecharModal(id){
+      document.getElementById(id).classList.remove('active');
+    }
+
+    function updateDashboard(){
+      updateHeaderAndProfile();
+      updateKPIs();
+      renderDashboardProjectionSummary();
+      renderPendencias();
+      renderFlowTable();
+      drawChart();
+    }
+
+    function updateAll(){
+      updateDashboard();
+      renderLaunches();
+      renderEmergenciais();
+      renderWeek();
+      renderCashView();
+      persistUI();
+    }
+
+    function persistUI(){
+      document.querySelectorAll('[data-company-view]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.companyView === ui.companyView);
+        btn.classList.toggle('accent', btn.dataset.companyView === ui.companyView);
+      });
+      document.querySelectorAll('[data-range]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.range === ui.periodFilter);
+        btn.classList.toggle('accent', btn.dataset.range === ui.periodFilter);
+      });
+      document.querySelectorAll('[data-priority]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.priority === ui.priorityFilter);
+        btn.classList.toggle('accent', btn.dataset.priority === ui.priorityFilter);
+      });
+      document.querySelectorAll('[data-launch-filter]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.launchFilter === ui.launchFilter);
+        btn.classList.toggle('accent', btn.dataset.launchFilter === ui.launchFilter);
+      });
+      document.getElementById('customRangeFields').hidden = ui.periodFilter !== 'custom';
+      document.getElementById('customStart').value = ui.customStart || getTodayStr();
+      document.getElementById('customEnd').value = ui.customEnd || getTodayStr();
+      const emergSelect = document.getElementById('emergCompetencia');
+      if (emergSelect && ui.emergCompetencia) emergSelect.value = ui.emergCompetencia;
+      const pendComp = document.getElementById('pendenciaCompetenciaFiltro');
+      if (pendComp) pendComp.value = ui.pendingSearchCompetencia || '';
+      const pendNome = document.getElementById('pendenciaNomeFiltro');
+      if (pendNome) pendNome.value = ui.pendingSearchNome || '';
+      const pendValor = document.getElementById('pendenciaValorFiltro');
+      if (pendValor) pendValor.value = ui.pendingSearchValor || '';
+    }
+
+    function aplicarFiltroPersonalizado(){
+      const start = document.getElementById('customStart').value;
+      const end = document.getElementById('customEnd').value;
+      if (!start || !end){
+        toast('Informe data inicial e final.', 'error');
+        return;
+      }
+      if (end < start){
+        toast('A data final precisa ser igual ou maior que a inicial.', 'error');
+        return;
+      }
+      ui.customStart = start;
+      ui.customEnd = end;
+      ui.periodFilter = 'custom';
+      updateAll();
+    }
+
+    function navegarSemana(dir){
+      ui.weekOffset += dir;
+      renderWeek();
+    }
+
+    function setupEvents(){
+      const loginForm = document.getElementById('loginForm');
+      if (loginForm) loginForm.addEventListener('submit', e => {
+        e.preventDefault();
+        login();
+      });
+
+      document.getElementById('saldoAtual').addEventListener('change', saveMetaInputs);
+      document.getElementById('horaAtualizacao').addEventListener('change', saveMetaInputs);
+
+      document.getElementById('searchLancamentos').addEventListener('input', e => {
+        ui.searchTerm = e.target.value;
+        renderLaunches();
+      });
+
+      const emergCompetencia = document.getElementById('emergCompetencia');
+      if (emergCompetencia) emergCompetencia.addEventListener('change', e => {
+        ui.emergCompetencia = e.target.value;
+        renderEmergenciais();
+      });
+
+      const pendenciaCompetenciaFiltro = document.getElementById('pendenciaCompetenciaFiltro');
+      if (pendenciaCompetenciaFiltro) pendenciaCompetenciaFiltro.addEventListener('change', e => {
+        ui.pendingSearchCompetencia = e.target.value;
+        renderPendencias();
+        persistUI();
+      });
+
+      const pendenciaNomeFiltro = document.getElementById('pendenciaNomeFiltro');
+      if (pendenciaNomeFiltro) pendenciaNomeFiltro.addEventListener('input', e => {
+        ui.pendingSearchNome = e.target.value;
+        renderPendencias();
+        persistUI();
+      });
+
+      const pendenciaValorFiltro = document.getElementById('pendenciaValorFiltro');
+      if (pendenciaValorFiltro) pendenciaValorFiltro.addEventListener('input', e => {
+        ui.pendingSearchValor = e.target.value;
+        renderPendencias();
+        persistUI();
+      });
+
+      const selecionarTodasPendencias = document.getElementById('selecionarTodasPendencias');
+      if (selecionarTodasPendencias) selecionarTodasPendencias.addEventListener('change', e => {
+        toggleAllPendencias(e.target.checked);
+      });
+
+      const limparSelecaoPendencias = document.getElementById('limparSelecaoPendencias');
+      if (limparSelecaoPendencias) limparSelecaoPendencias.addEventListener('click', () => {
+        clearPendenciaSelection();
+      });
+
+      const btnModoApresentacao = document.getElementById('btnModoApresentacao');
+      if (btnModoApresentacao) btnModoApresentacao.addEventListener('click', () => {});
+
+      document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+        ui.activeTab = tab.dataset.tab;
+        document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+        document.querySelectorAll('.tab-content').forEach(section => {
+          section.classList.toggle('active', section.id === 'tab-' + ui.activeTab);
+        });
+        if (ui.activeTab === 'dashboard') drawChart();
+      }));
+
+      document.querySelectorAll('[data-company-view]').forEach(btn => btn.addEventListener('click', () => {
+        ui.companyView = btn.dataset.companyView;
+        updateAll();
+      }));
+
+      document.querySelectorAll('[data-range]').forEach(btn => btn.addEventListener('click', () => {
+        ui.periodFilter = btn.dataset.range;
+        if (ui.periodFilter !== 'custom'){
+          updateAll();
+        } else {
+          persistUI();
+        }
+      }));
+
+      document.querySelectorAll('[data-priority]').forEach(btn => btn.addEventListener('click', () => {
+        ui.priorityFilter = btn.dataset.priority;
+        renderPendencias();
+        persistUI();
+      }));
+
+      document.querySelectorAll('[data-launch-filter]').forEach(btn => btn.addEventListener('click', () => {
+        ui.launchFilter = btn.dataset.launchFilter;
+        renderLaunches();
+        persistUI();
+      }));
+
+      document.getElementById('lancEmpresa').addEventListener('change', atualizarDestaqueEmpresaFormulario);
+
+      document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', e => {
+          if (e.target === overlay) overlay.classList.remove('active');
+        });
+      });
+
+      const fluxoCanvas = document.getElementById('fluxoChart');
+      fluxoCanvas.addEventListener('mousemove', e => {
+        const point = getNearestFlowPoint(fluxoCanvas, e.clientX);
+        if (point) renderFlowTooltip(point.row, fluxoCanvas);
+        else hideFlowTooltip();
+      });
+      fluxoCanvas.addEventListener('click', e => {
+        const point = getNearestFlowPoint(fluxoCanvas, e.clientX);
+        if (point) updateFlowDaySummary(point.row);
+      });
+      fluxoCanvas.addEventListener('mouseleave', hideFlowTooltip);
+
+      window.addEventListener('resize', () => {
+        hideFlowTooltip();
+        if (ui.activeTab === 'dashboard') drawChart();
+      });
+
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape'){
+          document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+        }
+      });
+    }
+
+    function focusLoginEmail(){
+      const loginEmail = document.getElementById('loginEmail');
+      if (loginEmail) requestAnimationFrame(() => loginEmail.focus());
+    }
+
+    function resetLoginForm(){
+      const loginForm = document.getElementById('loginForm');
+      if (loginForm) loginForm.reset();
+    }
+
+    function openLoginScreen(){
+      clearAuth();
+      resetLoginForm();
+      document.getElementById('loginScreen').classList.add('active');
+      enforceReadonlyUI();
+      updateHeaderMeta();
+      focusLoginEmail();
+    }
+
+    function closeLoginScreen(){
+      document.getElementById('loginScreen').classList.remove('active');
+    }
+
+    function login(){
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const senha = document.getElementById('loginSenha').value.trim();
+      const user = Object.values(LOGIN_USERS).find(u => u.email === email && u.senha === senha);
+      if (!user){
+        toast('Credenciais inválidas.', 'error');
+        return;
+      }
+      setAuth({ perfil: user.perfil, label: user.label, email: user.email });
+      closeLoginScreen();
+      updateAll();
+      toast(`Bem-vindo, ${user.label}.`, 'success');
+    }
+
+    function autoLoginIfPossible(){
+      clearAuth();
+      openLoginScreen();
+    }
+
+    function logout(){
+      openLoginScreen();
+      toast('Sessão encerrada com sucesso.', 'success');
+    }
+
+    function toast(message, type='success'){
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.remove();
+      }, 3200);
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#039;');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      clearAuth();
+      setupEvents();
+      autoLoginIfPossible();
+      ui.customStart = getTodayStr();
+      ui.customEnd = isoPlusDays(getTodayStr(), 7);
+      ui.emergCompetencia = getTodayStr().slice(0,7);
+      updateAll();
+      setPainelFluxoDiarioCollapsed(true);
+      setPainelPendenciasCollapsed(true);
+    });
+  </script>
+</body>
+</html>
