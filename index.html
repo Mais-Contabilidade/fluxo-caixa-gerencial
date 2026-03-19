@@ -103,6 +103,17 @@
     .config-group input[type="text"]{width:120px}
     .config-group input[type="date"]{width:150px}
     .config-group input[type="time"]{width:96px}
+    .emerg-toolbar{display:flex;flex-direction:column;gap:.85rem}
+    .emerg-filter-row{display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end}
+    .emerg-period-group{display:flex;flex-wrap:wrap;gap:.5rem;align-items:flex-end}
+    .emerg-period-pills{display:flex;flex-wrap:wrap;gap:.4rem}
+    .emerg-custom-range{display:flex;flex-wrap:wrap;gap:.6rem;align-items:flex-end}
+    .emerg-meta-wrap{display:flex;gap:.5rem;align-items:center}
+    .emerg-meta-wrap input{width:140px}
+    .meta-status-ok{color:var(--success)}
+    .meta-status-alerta{color:var(--warning)}
+    .meta-status-estourada{color:var(--danger)}
+
     .profile-badge strong,.company-chip strong,.stat-chip strong{font-size:.84rem}
     .muted{color:var(--text-secondary)}
     .btn{
@@ -313,12 +324,14 @@
     .empty-state .emoji{font-size:2.3rem;opacity:.55;margin-bottom:.5rem}
     .flow-details{display:grid;gap:.3rem;min-width:260px}
     .chart-wrap{position:relative}
-    .chart-tooltip{position:absolute;pointer-events:none;z-index:5;min-width:240px;max-width:320px;background:rgba(13,17,23,.98);border:1px solid var(--border-light);border-radius:14px;padding:.75rem .85rem;box-shadow:var(--shadow);opacity:0;transform:translate(-50%,-110%);transition:opacity .12s ease;backdrop-filter:blur(10px)}
+    .chart-panel,.chart-panel .panel-body,.chart-wrap{overflow:visible}
+    .chart-tooltip{position:absolute;pointer-events:none;z-index:20;width:min(340px,calc(100vw - 32px));min-width:260px;max-width:min(360px,calc(100vw - 32px));background:rgba(13,17,23,.98);border:1px solid var(--border-light);border-radius:14px;padding:.75rem .85rem;box-shadow:var(--shadow);opacity:0;transform:none;transition:opacity .12s ease;backdrop-filter:blur(10px);left:12px;top:12px}
     .chart-tooltip.active{opacity:1}
     .chart-tooltip-title{font-size:.82rem;font-weight:800;margin-bottom:.5rem}
     .chart-tooltip-grid{display:grid;gap:.28rem}
-    .chart-tooltip-row{display:flex;justify-content:space-between;gap:.75rem;font-size:.74rem}
-    .chart-tooltip-row strong{font-family:'JetBrains Mono',monospace}
+    .chart-tooltip-row{display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem;font-size:.74rem;line-height:1.35}
+    .chart-tooltip-row span{flex:1;min-width:0}
+    .chart-tooltip-row strong{font-family:'JetBrains Mono',monospace;flex-shrink:0;white-space:nowrap;text-align:right}
     .chart-tooltip-row .entrada{color:var(--accent-green)}
     .chart-tooltip-row .saida{color:var(--accent-red)}
     .flow-launch-list{display:grid;gap:.24rem;margin-top:.55rem;padding-top:.45rem;border-top:1px solid rgba(255,255,255,.08)}
@@ -853,6 +866,7 @@
       .chart-panel .panel-title{font-size:.9rem;line-height:1.3}
       .chart-panel .panel-subtitle{font-size:.72rem;line-height:1.4}
       .chart-wrap{padding:.6rem}
+      .chart-tooltip{width:min(300px,calc(100vw - 20px));min-width:0;max-width:min(300px,calc(100vw - 20px));padding:.7rem .75rem}
       .chart-panel canvas{height:260px}
       .legend{display:grid;grid-template-columns:1fr;gap:.45rem;width:100%}
       .legend span{display:grid;grid-template-columns:11px 1fr;align-items:start;white-space:normal}
@@ -866,6 +880,11 @@
       .btn{width:100%}
       .toolbar-right .btn,.action-group .btn{width:auto}
       .config-group input[type="text"],.config-group input[type="date"],.config-group input[type="time"]{width:100%}
+      .emerg-filter-row,.emerg-period-group,.emerg-custom-range,.emerg-meta-wrap{width:100%}
+      .emerg-meta-wrap{flex-direction:column;align-items:stretch}
+      .emerg-meta-wrap input,.emerg-meta-wrap button{width:100%}
+      .emerg-period-pills{width:100%}
+
       .login-screen{padding:.5rem;align-items:center;justify-content:center;min-height:100dvh}
       .login-card,.login-side{padding:.95rem}
       .login-copy h2{font-size:1.42rem}
@@ -1276,19 +1295,47 @@
     </section>
 
     <section class="tab-content" id="tab-emergenciais">
-      <div class="toolbar">
+      <div class="toolbar emerg-toolbar">
         <div class="toolbar-left">
           <div>
             <div class="panel-title">Despesas Emergenciais</div>
-            <div class="panel-subtitle">Controle de despesas emergenciais por competência, com leitura de valor gasto e quantidade.</div>
+            <div class="panel-subtitle">Controle de despesas emergenciais já pagas no ato do lançamento, com leitura de valor gasto, quantidade e acompanhamento contra meta.</div>
           </div>
         </div>
-        <div class="toolbar-right">
+        <div class="emerg-filter-row">
           <div class="field" style="min-width:220px">
             <label class="small muted" for="emergCompetencia">Competência</label>
             <select id="emergCompetencia"></select>
           </div>
-          <div class="toolbar-actions admin-only">
+          <div class="emerg-period-group">
+            <div class="field">
+              <label class="small muted">Filtro rápido</label>
+              <div class="pill-group emerg-period-pills" id="emergPeriodFilterGroup">
+                <button class="pill active accent" type="button" data-emerg-range="week">Semana</button>
+                <button class="pill" type="button" data-emerg-range="15d">Quinzenal</button>
+                <button class="pill" type="button" data-emerg-range="custom">Personalizado</button>
+              </div>
+            </div>
+            <div class="emerg-custom-range" id="emergCustomRangeFields" hidden>
+              <div class="field">
+                <label class="small muted" for="emergCustomStart">Início</label>
+                <input type="date" id="emergCustomStart">
+              </div>
+              <div class="field">
+                <label class="small muted" for="emergCustomEnd">Fim</label>
+                <input type="date" id="emergCustomEnd">
+              </div>
+              <button class="btn btn-secondary" type="button" id="aplicarEmergCustom">Aplicar</button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="small muted" for="emergMetaSemanal">Meta semanal</label>
+            <div class="emerg-meta-wrap">
+              <input type="text" id="emergMetaSemanal" inputmode="decimal" placeholder="0,00">
+              <button class="btn btn-secondary admin-only" type="button" id="salvarEmergMeta">Salvar meta</button>
+            </div>
+          </div>
+          <div class="toolbar-actions admin-only" style="margin-left:auto">
             <button class="btn btn-primary" onclick="abrirModalEmergencial()">+ Nova Emergencial</button>
           </div>
         </div>
@@ -1301,11 +1348,10 @@
               <thead>
                 <tr>
                   <th>Empresa</th>
-                  <th>Descrição</th>
+                  <th>Fornecedor</th>
                   <th>Valor</th>
                   <th>Data</th>
-                  <th>Status</th>
-                  <th>Competência</th>
+                  <th>Observações</th>
                   <th>Ações</th>
                 </tr>
               </thead>
@@ -1363,7 +1409,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="lancDescricao">Descrição / Fornecedor *</label>
+            <label for="lancDescricao" id="lancDescricaoLabel">Descrição / Fornecedor *</label>
             <input type="text" id="lancDescricao" placeholder="Ex.: Stone, Bling, aluguel">
           </div>
         </div>
@@ -1394,12 +1440,12 @@
           </div>
         </div>
         <div class="form-grid">
-          <div class="form-group">
+          <div class="form-group" id="lancDataEfetivaGroup">
             <label for="lancDataEfetiva">Data efetiva / provisão</label>
             <input type="date" id="lancDataEfetiva">
           </div>
-          <div class="form-group">
-            <label for="lancObservacao">Observação</label>
+          <div class="form-group" id="lancObservacaoGroup">
+            <label for="lancObservacao" id="lancObservacaoLabel">Observação</label>
             <input type="text" id="lancObservacao" placeholder="Opcional">
           </div>
         </div>
@@ -1512,6 +1558,9 @@
       weekOffset: 0,
       searchTerm: '',
       emergCompetencia: '',
+      emergPeriodFilter: 'week',
+      emergCustomStart: '',
+      emergCustomEnd: '',
       pendingSearchCompetencia: '',
       pendingSearchNome: '',
       pendingSearchValor: '',
@@ -1666,7 +1715,8 @@
         manualBalances: {
           'malut-ferragens': { saldo: 11581.62, atualizadoEm: hoje + 'T' + agora }
         },
-        version: 6
+        emergencyWeeklyGoal: 1500,
+        version: 7
       };
     }
 
@@ -1696,6 +1746,7 @@
       nextState.dataBaseVisual = getTodayStr();
       nextState.cashBalances = mergeCashBalances(nextState.cashBalances || {});
       nextState.manualBalances = mergeManualBalances(nextState.manualBalances || {});
+      nextState.emergencyWeeklyGoal = Number(nextState.emergencyWeeklyGoal || 0);
       nextState.ferragensBalanceMode = 'caixa';
       return nextState;
     }
@@ -1823,22 +1874,27 @@
       }));
 
 
-      state.emergenciais = (state.emergenciais || []).map((item, idx) => ({
-        id: item.id || Date.now() + 2000 + idx,
-        empresa: item.empresa || 'malut-pneus',
-        conta: item.conta || guessConta(item.empresa || 'malut-pneus'),
-        descricao: item.descricao || item.fornecedor || 'Despesa emergencial',
-        valorOriginal: Number(item.valorOriginal || item.valor || 0),
-        valorRestante: typeof item.valorRestante === 'number' ? item.valorRestante : (typeof item.valor === 'number' ? item.valor : Number(item.valor || 0)),
-        valorPago: Number(item.valorPago || 0),
-        vencimento: item.vencimento || item.data || getTodayStr(),
-        dataEfetiva: item.dataEfetiva || item.dataPagamento || null,
-        prioridade: item.prioridade || 'critico',
-        status: normalizeExpenseStatus(item),
-        observacao: item.observacao || item.obs || '',
-        criadoEm: item.criadoEm || new Date().toISOString(),
-        origem: 'emergencial'
-      }));
+      state.emergenciais = (state.emergenciais || []).map((item, idx) => {
+        const valorEmergencial = Number(item.valorOriginal || item.valor || 0);
+        const vencimentoEmergencial = item.vencimento || item.data || getTodayStr();
+        const dataEfetivaEmergencial = item.dataEfetiva || item.dataPagamento || vencimentoEmergencial;
+        return {
+          id: item.id || Date.now() + 2000 + idx,
+          empresa: item.empresa || 'malut-pneus',
+          conta: item.conta || guessConta(item.empresa || 'malut-pneus'),
+          descricao: item.descricao || item.fornecedor || 'Despesa emergencial',
+          valorOriginal: valorEmergencial,
+          valorRestante: 0,
+          valorPago: Number(item.valorPago || valorEmergencial),
+          vencimento: vencimentoEmergencial,
+          dataEfetiva: dataEfetivaEmergencial,
+          prioridade: 'critico',
+          status: 'realizado',
+          observacao: item.observacao || item.obs || '',
+          criadoEm: item.criadoEm || new Date().toISOString(),
+          origem: 'emergencial'
+        };
+      });
     }
 
     function normalizeExpenseStatus(item){
@@ -2945,9 +3001,34 @@ function getFlowRows(){
         </div>
       `;
       const rect = canvas.getBoundingClientRect();
-      tooltip.style.left = `${rect.left + window.scrollX + (row.__plotX || 0)}px`;
-      tooltip.style.top = `${rect.top + window.scrollY + (row.__plotY || 0) - 12}px`;
+      const wrap = canvas.closest('.chart-wrap');
+      const wrapRect = wrap ? wrap.getBoundingClientRect() : rect;
+      const pointX = (row.__plotX || 0) + (rect.left - wrapRect.left);
+      const pointY = (row.__plotY || 0) + (rect.top - wrapRect.top);
+
       tooltip.classList.add('active');
+      tooltip.style.visibility = 'hidden';
+      tooltip.style.left = '12px';
+      tooltip.style.top = '12px';
+
+      const tooltipWidth = tooltip.offsetWidth || Math.min(340, Math.max(260, window.innerWidth - 32));
+      const tooltipHeight = tooltip.offsetHeight || 220;
+      const sidePadding = window.innerWidth <= 768 ? 8 : 12;
+
+      let left = pointX - (tooltipWidth / 2);
+      left = Math.max(sidePadding, Math.min(left, wrapRect.width - tooltipWidth - sidePadding));
+
+      let top = pointY - tooltipHeight - 16;
+      if(top < sidePadding){
+        top = pointY + 16;
+      }
+      if(top + tooltipHeight > wrapRect.height - sidePadding){
+        top = Math.max(sidePadding, wrapRect.height - tooltipHeight - sidePadding);
+      }
+
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${top}px`;
+      tooltip.style.visibility = 'visible';
     }
 
     function hideFlowTooltip(){
@@ -3066,6 +3147,37 @@ function getFlowRows(){
       }).join('');
     }
 
+    function getEmergencyPeriodBounds(){
+      const today = new Date(getTodayStr() + 'T12:00:00');
+      if (ui.emergPeriodFilter === '15d') {
+        const start15 = getTodayStr();
+        return { start: start15, end: isoPlusDays(start15, 14), label: 'Quinzenal' };
+      }
+      if (ui.emergPeriodFilter === 'custom') {
+        const start = ui.emergCustomStart || getTodayStr();
+        const end = ui.emergCustomEnd || start;
+        return { start: start <= end ? start : end, end: end >= start ? end : start, label: 'Personalizado' };
+      }
+      const start = new Date(today);
+      const day = start.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      start.setDate(start.getDate() + diff);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 6);
+      return {
+        start: start.toISOString().slice(0,10),
+        end: end.toISOString().slice(0,10),
+        label: 'Semanal'
+      };
+    }
+
+    function getEmergencyGoalForPeriod(bounds){
+      const start = new Date(bounds.start + 'T12:00:00');
+      const end = new Date(bounds.end + 'T12:00:00');
+      const days = Math.max(1, Math.round((end - start) / 86400000) + 1);
+      return Number(state.emergencyWeeklyGoal || 0) * (days / 7);
+    }
+
     function renderEmergenciais(){
       const select = document.getElementById('emergCompetencia');
       const resumo = document.getElementById('emergenciaisResumo');
@@ -3078,21 +3190,33 @@ function getFlowRows(){
       if (!ui.emergCompetencia || !competencias.includes(ui.emergCompetencia)) ui.emergCompetencia = competencias[0] || fallback;
 
       select.innerHTML = (competencias.length ? competencias : [fallback]).map(comp => `<option value="${comp}" ${comp === ui.emergCompetencia ? 'selected' : ''}>${formatCompetenceLabel(comp)}</option>`).join('');
-      const items = itemsBase.filter(item => getEmergencyCompetence(item) === ui.emergCompetencia).sort((a,b) => (b.dataEfetiva || b.vencimento || '').localeCompare(a.dataEfetiva || a.vencimento || ''));
+      const bounds = getEmergencyPeriodBounds();
+      const items = itemsBase.filter(item => {
+        const itemDate = item.dataEfetiva || item.vencimento || '';
+        return getEmergencyCompetence(item) === ui.emergCompetencia && itemDate >= bounds.start && itemDate <= bounds.end;
+      }).sort((a,b) => (b.dataEfetiva || b.vencimento || '').localeCompare(a.dataEfetiva || a.vencimento || ''));
       const total = items.reduce((acc, item) => acc + Number(item.valorPago || item.valorOriginal || 0), 0);
       const qtd = items.length;
       const ticket = qtd ? total / qtd : 0;
       const empresasAtivas = new Set(items.map(item => item.empresa)).size;
+      const metaPeriodo = getEmergencyGoalForPeriod(bounds);
+      const diferencaMeta = total - metaPeriodo;
+      const statusMeta = metaPeriodo <= 0
+        ? { label: 'Meta não definida', cls: 'meta-status-alerta', helper: 'Cadastre a meta semanal para acompanhar o limite emergencial.' }
+        : diferencaMeta > 0
+          ? { label: 'Meta ultrapassada', cls: 'meta-status-estourada', helper: `Acima da meta em R$ ${formatarValor(diferencaMeta)}.` }
+          : { label: 'Dentro da meta', cls: 'meta-status-ok', helper: `Folga de R$ ${formatarValor(Math.abs(diferencaMeta))} no período.` };
+      const periodoTexto = `${bounds.label}: ${formatDateLabel(bounds.start)} a ${formatDateLabel(bounds.end)}`;
 
       resumo.innerHTML = `
-        <div class="kpi-card red"><div class="kpi-label">Gasto emergencial</div><div class="kpi-value">R$ ${formatarValor(total)}</div><div class="kpi-trend">${formatCompetenceLabel(ui.emergCompetencia)}</div></div>
-        <div class="kpi-card blue"><div class="kpi-label">Quantidade</div><div class="kpi-value">${qtd}</div><div class="kpi-trend">Lançamentos na competência</div></div>
-        <div class="kpi-card teal"><div class="kpi-label">Ticket médio</div><div class="kpi-value">R$ ${formatarValor(ticket)}</div><div class="kpi-trend">Média por lançamento</div></div>
-        <div class="kpi-card green"><div class="kpi-label">Empresas com ocorrência</div><div class="kpi-value">${empresasAtivas}</div><div class="kpi-trend">Bases com emergenciais</div></div>
+        <div class="kpi-card red"><div class="kpi-label">Gasto emergencial</div><div class="kpi-value">R$ ${formatarValor(total)}</div><div class="kpi-trend">${periodoTexto}</div></div>
+        <div class="kpi-card blue"><div class="kpi-label">Quantidade</div><div class="kpi-value">${qtd}</div><div class="kpi-trend">Lançamentos no filtro</div></div>
+        <div class="kpi-card teal"><div class="kpi-label">Meta do período</div><div class="kpi-value">R$ ${formatarValor(metaPeriodo)}</div><div class="kpi-trend">Base semanal: R$ ${formatarValor(state.emergencyWeeklyGoal || 0)}</div></div>
+        <div class="kpi-card ${metaPeriodo > 0 && diferencaMeta > 0 ? 'red' : 'green'}"><div class="kpi-label">Status da meta</div><div class="kpi-value ${statusMeta.cls}">${statusMeta.label}</div><div class="kpi-trend">${statusMeta.helper}</div></div>
       `;
 
       if (!items.length){
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Nenhuma despesa emergencial lançada nesta competência.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhuma despesa emergencial encontrada no filtro selecionado.</td></tr>';
         return;
       }
 
@@ -3102,11 +3226,10 @@ function getFlowRows(){
         return `
           <tr>
             <td>${escapeHtml(EMPRESAS[item.empresa]?.label || '-')}</td>
-            <td><div>${escapeHtml(item.descricao)}</div><div class="small muted">${escapeHtml(item.observacao || 'Despesa emergencial')}</div></td>
+            <td>${escapeHtml(item.descricao)}</td>
             <td class="value saida">R$ ${formatarValor(valor)}</td>
             <td>${formatDateLabel(item.dataEfetiva || item.vencimento)}</td>
-            <td><span class="status-badge ${escapeHtml(getStatusLabel(item.status))}">${escapeHtml(getStatusLabel(item.status))}</span></td>
-            <td>${formatCompetenceLabel(getEmergencyCompetence(item))}</td>
+            <td>${escapeHtml(item.observacao || '—')}</td>
             <td><div class="action-group"><button class="btn btn-secondary btn-small ${isCliente() ? 'admin-only' : ''}" onclick="editarLancamento(${item.id}, 'despesa', 'emergencial')">Editar</button><button class="btn btn-danger btn-small ${isCliente() ? 'admin-only' : ''}" onclick="excluirLancamento(${item.id}, 'despesa', ${isFinal ? 'true' : 'false'}, 'emergencial')">Excluir</button></div></td>
           </tr>
         `;
@@ -3132,22 +3255,45 @@ function getFlowRows(){
       const grid = document.getElementById('semanaGrid');
       const summary = document.getElementById('semanaResumo');
       document.getElementById('semanaAtual').textContent = `${formatDateLabel(start)} a ${formatDateLabel(end)}`;
+      const entries = getCompanyEntries();
       const rows = [];
+
       for (let date = start; date <= end; date = isoPlusDays(date, 1)){
-        const items = getCompanyEntries().filter(item => {
+        const items = entries.filter(item => {
           const ref = item.tipo === 'despesa' ? getExpenseReferenceDate(item) : getRevenueReferenceDate(item);
           return ref === date;
         });
-        const entradas = items.filter(item => item.tipo === 'receita').reduce((acc, item) => acc + Number(item.valor || 0), 0);
-        const saidas = items.filter(item => item.tipo === 'despesa').reduce((acc, item) => acc + Number(item.valorRestante || item.valorOriginal || 0), 0);
-        rows.push({ date, items, entradas, saidas });
+
+        const receitas = items.filter(item => item.tipo === 'receita');
+        const despesas = items.filter(item => item.tipo === 'despesa');
+        const despesasOperacionais = despesas.filter(item => item.origem !== 'emergencial');
+        const despesasEmergenciais = despesas.filter(item => item.origem === 'emergencial');
+
+        const entradas = receitas.reduce((acc, item) => acc + Number(item.valor || 0), 0);
+        const saidasOperacionais = despesasOperacionais.reduce((acc, item) => acc + Number(item.valorRestante || item.valorOriginal || 0), 0);
+        const saidasEmergenciais = despesasEmergenciais.reduce((acc, item) => acc + Number(item.valorRestante || item.valorOriginal || 0), 0);
+        const saidas = saidasOperacionais + saidasEmergenciais;
+        const saldo = entradas - saidas;
+
+        rows.push({
+          date,
+          items,
+          receitas,
+          despesasOperacionais,
+          despesasEmergenciais,
+          entradas,
+          saidasOperacionais,
+          saidasEmergenciais,
+          saidas,
+          saldo
+        });
       }
 
       grid.innerHTML = rows.map(row => {
-        const saldo = row.entradas - row.saidas;
+        const hasEmergency = row.saidasEmergenciais > 0;
         const classes = [
           row.date === getTodayStr() ? 'today' : '',
-          saldo < 0 ? 'negative' : '',
+          row.saldo < 0 ? 'negative' : '',
           isWeekend(row.date) ? 'weekend' : ''
         ].filter(Boolean).join(' ');
         return `
@@ -3157,27 +3303,35 @@ function getFlowRows(){
                 <div class="day-name">${diaSemana(row.date)}</div>
                 <div class="day-date">${formatShortDate(row.date)}</div>
               </div>
-              <div class="tag ${saldo < 0 ? 'critico' : 'baixo'}">${saldo < 0 ? 'Saída maior' : 'Controle'}</div>
+              <div class="tag ${row.saldo < 0 ? 'critico' : 'baixo'}">${row.saldo < 0 ? 'Saída maior' : 'Controle'}</div>
             </div>
             <div class="day-lines">
               <div>Entradas: <strong class="entrada">R$ ${formatarValor(row.entradas)}</strong></div>
-              <div>Saídas: <strong class="saida">R$ ${formatarValor(row.saidas)}</strong></div>
-              <div>Saldo do dia: <strong class="${saldo >= 0 ? 'positive' : 'negative'}">R$ ${formatarValor(saldo)}</strong></div>
+              <div>Saídas operacionais: <strong class="saida">R$ ${formatarValor(row.saidasOperacionais)}</strong></div>
+              <div>Emergenciais: <strong class="${hasEmergency ? 'saida' : ''}">R$ ${formatarValor(row.saidasEmergenciais)}</strong></div>
+              <div>Saídas totais: <strong class="saida">R$ ${formatarValor(row.saidas)}</strong></div>
+              <div>Saldo do dia: <strong class="${row.saldo >= 0 ? 'positive' : 'negative'}">R$ ${formatarValor(row.saldo)}</strong></div>
             </div>
             <div class="day-items">
-              ${row.items.length ? row.items.map(item => `
-                <div>
-                  <span>${escapeHtml(item.descricao)}</span>
-                  <strong class="${item.tipo === 'receita' ? 'entrada' : 'saida'}">R$ ${formatarValor(item.tipo === 'despesa' ? (item.valorRestante || item.valorOriginal || 0) : item.valor || 0)}</strong>
-                </div>
-              `).join('') : '<div>Sem lançamentos</div>'}
+              ${row.items.length ? row.items.map(item => {
+                const valorItem = item.tipo === 'despesa' ? (item.valorRestante || item.valorOriginal || 0) : (item.valor || 0);
+                const origemLabel = item.origem === 'emergencial' ? 'Emergencial' : (item.tipo === 'receita' ? 'Entrada' : 'Operacional');
+                return `
+                  <div>
+                    <span>${escapeHtml(item.descricao)} <small class="muted">• ${origemLabel}</small></span>
+                    <strong class="${item.tipo === 'receita' ? 'entrada' : 'saida'}">R$ ${formatarValor(valorItem)}</strong>
+                  </div>
+                `;
+              }).join('') : '<div>Sem lançamentos</div>'}
             </div>
           </div>
         `;
       }).join('');
 
       const totalEntradas = rows.reduce((acc, row) => acc + row.entradas, 0);
-      const totalSaidas = rows.reduce((acc, row) => acc + row.saidas, 0);
+      const totalSaidasOperacionais = rows.reduce((acc, row) => acc + row.saidasOperacionais, 0);
+      const totalSaidasEmergenciais = rows.reduce((acc, row) => acc + row.saidasEmergenciais, 0);
+      const totalSaidas = totalSaidasOperacionais + totalSaidasEmergenciais;
       const diasComMovimento = rows.filter(row => row.items.length).length;
 
       summary.innerHTML = `
@@ -3188,10 +3342,12 @@ function getFlowRows(){
         <div class="kpi-card red">
           <div class="kpi-label">Saídas da Semana</div>
           <div class="kpi-value">R$ ${formatarValor(totalSaidas)}</div>
+          <div class="small muted">Operacionais: R$ ${formatarValor(totalSaidasOperacionais)} • Emergenciais: R$ ${formatarValor(totalSaidasEmergenciais)}</div>
         </div>
         <div class="kpi-card teal">
           <div class="kpi-label">Saldo da Semana</div>
           <div class="kpi-value ${totalEntradas - totalSaidas >= 0 ? 'positive' : 'negative'}">R$ ${formatarValor(totalEntradas - totalSaidas)}</div>
+          <div class="small muted">Já considerando os emergenciais</div>
         </div>
         <div class="kpi-card blue">
           <div class="kpi-label">Dias com Movimento</div>
@@ -3289,8 +3445,6 @@ function getFlowRows(){
       document.getElementById('lancData').value = getTodayStr();
       document.getElementById('lancDataEfetiva').value = isEmergencial ? getTodayStr() : '';
       document.getElementById('lancObservacao').value = '';
-      document.getElementById('lancStatusGroup').style.display = '';
-      document.getElementById('lancPrioridadeGroup').style.display = tipo === 'despesa' ? '' : 'none';
       document.getElementById('lancStatus').innerHTML = tipo === 'despesa'
         ? `
           <option value="previsto">Previsto</option>
@@ -3302,14 +3456,34 @@ function getFlowRows(){
           <option value="provisionado">Provisionado</option>
           <option value="realizado">Realizado</option>
         `;
-      document.getElementById('lancStatus').value = 'previsto';
+      document.getElementById('lancStatus').value = isEmergencial ? 'realizado' : 'previsto';
       document.getElementById('lancPrioridade').value = isEmergencial ? 'critico' : 'aclassificar';
+      configureLancamentoForm(tipo, origem);
       atualizarDestaqueEmpresaFormulario();
       abrirModal('modalLancamento');
     }
 
     function abrirModalEmergencial(){
       abrirModalLancamento('despesa', 'emergencial');
+    }
+
+    function configureLancamentoForm(tipo, origem='lancamentos'){
+      const isEmergencial = origem === 'emergencial';
+      const descricaoLabel = document.getElementById('lancDescricaoLabel');
+      const descricaoInput = document.getElementById('lancDescricao');
+      const observacaoLabel = document.getElementById('lancObservacaoLabel');
+      const observacaoGroup = document.getElementById('lancObservacaoGroup');
+      const statusGroup = document.getElementById('lancStatusGroup');
+      const prioridadeGroup = document.getElementById('lancPrioridadeGroup');
+      const dataEfetivaGroup = document.getElementById('lancDataEfetivaGroup');
+
+      if (descricaoLabel) descricaoLabel.textContent = isEmergencial ? 'Fornecedor *' : 'Descrição / Fornecedor *';
+      if (descricaoInput) descricaoInput.placeholder = isEmergencial ? 'Ex.: Stone, auto elétrica, manutenção' : 'Ex.: Stone, Bling, aluguel';
+      if (observacaoLabel) observacaoLabel.textContent = isEmergencial ? 'Observações' : 'Observação';
+      if (statusGroup) statusGroup.style.display = isEmergencial ? 'none' : '';
+      if (prioridadeGroup) prioridadeGroup.style.display = (!isEmergencial && tipo === 'despesa') ? '' : 'none';
+      if (dataEfetivaGroup) dataEfetivaGroup.style.display = isEmergencial ? 'none' : '';
+      if (observacaoGroup) observacaoGroup.style.gridColumn = isEmergencial ? '1 / -1' : '';
     }
 
     function atualizarDestaqueEmpresaFormulario(){
@@ -3321,14 +3495,17 @@ function getFlowRows(){
       if (!isAdmin()) return;
       const tipo = document.getElementById('lancTipo').value;
       const origem = document.getElementById('lancOrigem').value || 'lancamentos';
+      const isEmergencial = origem === 'emergencial';
       const id = Number(document.getElementById('lancId').value || Date.now());
       const empresa = document.getElementById('lancEmpresa').value;
       const descricao = document.getElementById('lancDescricao').value.trim();
       const valor = parseMoeda(document.getElementById('lancValor').value);
       const data = document.getElementById('lancData').value;
       const dataEfetiva = document.getElementById('lancDataEfetiva').value || null;
-      const status = document.getElementById('lancStatus').value;
-      const prioridade = tipo === 'despesa' ? priorityClass({ prioridade: document.getElementById('lancPrioridade').value }) : null;
+      const status = isEmergencial ? 'realizado' : document.getElementById('lancStatus').value;
+      const prioridade = tipo === 'despesa'
+        ? (isEmergencial ? 'critico' : priorityClass({ prioridade: document.getElementById('lancPrioridade').value }))
+        : null;
       const observacao = document.getElementById('lancObservacao').value.trim();
 
       if (!descricao || !valor || !data){
@@ -3337,18 +3514,17 @@ function getFlowRows(){
       }
 
       if (tipo === 'despesa'){
-        const isEmergencial = origem === 'emergencial';
         const item = {
           id,
           empresa,
           conta: guessConta(empresa),
           descricao,
           valorOriginal: valor,
-          valorRestante: status === 'realizado' ? 0 : valor,
-          valorPago: status === 'realizado' ? valor : 0,
+          valorRestante: isEmergencial ? 0 : (status === 'realizado' ? 0 : valor),
+          valorPago: isEmergencial ? valor : (status === 'realizado' ? valor : 0),
           vencimento: data,
-          dataEfetiva: isEmergencial ? (dataEfetiva || data) : dataEfetiva,
-          prioridade: isEmergencial ? 'critico' : prioridade,
+          dataEfetiva: isEmergencial ? data : dataEfetiva,
+          prioridade,
           status,
           observacao,
           criadoEm: new Date().toISOString(),
@@ -3404,7 +3580,8 @@ function getFlowRows(){
     }
 
     function openEditLaunch(item, tipo, origem='lancamentos'){
-      document.getElementById('modalLancamentoTitulo').textContent = 'Editar ' + (origem === 'emergencial' ? 'Despesa Emergencial' : (tipo === 'despesa' ? 'Despesa' : 'Receita'));
+      const isEmergencial = origem === 'emergencial';
+      document.getElementById('modalLancamentoTitulo').textContent = 'Editar ' + (isEmergencial ? 'Despesa Emergencial' : (tipo === 'despesa' ? 'Despesa' : 'Receita'));
       document.getElementById('lancId').value = item.id;
       document.getElementById('lancTipo').value = tipo;
       document.getElementById('lancOrigem').value = origem;
@@ -3412,10 +3589,8 @@ function getFlowRows(){
       document.getElementById('lancDescricao').value = item.descricao;
       document.getElementById('lancValor').value = formatarValor(tipo === 'despesa' ? item.valorOriginal : item.valor);
       document.getElementById('lancData').value = tipo === 'despesa' ? item.vencimento : item.data;
-      document.getElementById('lancDataEfetiva').value = item.dataEfetiva || '';
+      document.getElementById('lancDataEfetiva').value = isEmergencial ? (item.dataEfetiva || item.vencimento || '') : (item.dataEfetiva || '');
       document.getElementById('lancObservacao').value = item.observacao || '';
-      document.getElementById('lancStatusGroup').style.display = '';
-      document.getElementById('lancPrioridadeGroup').style.display = tipo === 'despesa' ? '' : 'none';
       document.getElementById('lancStatus').innerHTML = tipo === 'despesa'
         ? `
           <option value="previsto">Previsto</option>
@@ -3427,8 +3602,9 @@ function getFlowRows(){
           <option value="provisionado">Provisionado</option>
           <option value="realizado">Realizado</option>
         `;
-      document.getElementById('lancStatus').value = (['previsto','provisionado','realizado'].includes(item.status) ? item.status : 'previsto');
-      document.getElementById('lancPrioridade').value = tipo === 'receita' ? 'aclassificar' : priorityClass(item);
+      document.getElementById('lancStatus').value = isEmergencial ? 'realizado' : ((['previsto','provisionado','realizado'].includes(item.status) ? item.status : 'previsto'));
+      document.getElementById('lancPrioridade').value = tipo === 'receita' ? 'aclassificar' : (isEmergencial ? 'critico' : priorityClass(item));
+      configureLancamentoForm(tipo, origem);
       atualizarDestaqueEmpresaFormulario();
       abrirModal('modalLancamento');
     }
@@ -3600,6 +3776,18 @@ function getFlowRows(){
       document.getElementById('customEnd').value = ui.customEnd || getTodayStr();
       const emergSelect = document.getElementById('emergCompetencia');
       if (emergSelect && ui.emergCompetencia) emergSelect.value = ui.emergCompetencia;
+      document.querySelectorAll('[data-emerg-range]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.emergRange === ui.emergPeriodFilter);
+        btn.classList.toggle('accent', btn.dataset.emergRange === ui.emergPeriodFilter);
+      });
+      const emergCustomRange = document.getElementById('emergCustomRangeFields');
+      if (emergCustomRange) emergCustomRange.hidden = ui.emergPeriodFilter !== 'custom';
+      const emergCustomStart = document.getElementById('emergCustomStart');
+      const emergCustomEnd = document.getElementById('emergCustomEnd');
+      if (emergCustomStart) emergCustomStart.value = ui.emergCustomStart || getTodayStr();
+      if (emergCustomEnd) emergCustomEnd.value = ui.emergCustomEnd || isoPlusDays(getTodayStr(), 6);
+      const emergMeta = document.getElementById('emergMetaSemanal');
+      if (emergMeta) emergMeta.value = formatarValor(state.emergencyWeeklyGoal || 0);
       const pendComp = document.getElementById('pendenciaCompetenciaFiltro');
       if (pendComp) pendComp.value = ui.pendingSearchCompetencia || '';
       const pendNome = document.getElementById('pendenciaNomeFiltro');
@@ -3643,12 +3831,6 @@ function getFlowRows(){
       document.getElementById('searchLancamentos').addEventListener('input', e => {
         ui.searchTerm = e.target.value;
         renderLaunches();
-      });
-
-      const emergCompetencia = document.getElementById('emergCompetencia');
-      if (emergCompetencia) emergCompetencia.addEventListener('change', e => {
-        ui.emergCompetencia = e.target.value;
-        renderEmergenciais();
       });
 
       const pendenciaCompetenciaFiltro = document.getElementById('pendenciaCompetenciaFiltro');
@@ -3719,6 +3901,51 @@ function getFlowRows(){
         renderLaunches();
         persistUI();
       }));
+
+      document.querySelectorAll('[data-emerg-range]').forEach(btn => btn.addEventListener('click', () => {
+        ui.emergPeriodFilter = btn.dataset.emergRange;
+        if (ui.emergPeriodFilter !== 'custom') {
+          renderEmergenciais();
+          persistUI();
+        } else {
+          persistUI();
+        }
+      }));
+
+      const emergCompetencia = document.getElementById('emergCompetencia');
+      if (emergCompetencia) emergCompetencia.addEventListener('change', e => {
+        ui.emergCompetencia = e.target.value;
+        renderEmergenciais();
+        persistUI();
+      });
+
+      const aplicarEmergCustom = document.getElementById('aplicarEmergCustom');
+      if (aplicarEmergCustom) aplicarEmergCustom.addEventListener('click', () => {
+        const start = document.getElementById('emergCustomStart').value;
+        const end = document.getElementById('emergCustomEnd').value;
+        if (!start || !end) return;
+        ui.emergCustomStart = start;
+        ui.emergCustomEnd = end;
+        ui.emergPeriodFilter = 'custom';
+        renderEmergenciais();
+        persistUI();
+      });
+
+      const emergMetaSemanal = document.getElementById('emergMetaSemanal');
+      if (emergMetaSemanal) {
+        emergMetaSemanal.addEventListener('input', () => formatarMoeda(emergMetaSemanal));
+        emergMetaSemanal.addEventListener('blur', () => {
+          if (!emergMetaSemanal.value) emergMetaSemanal.value = formatarValor(state.emergencyWeeklyGoal || 0);
+        });
+      }
+
+      const salvarEmergMeta = document.getElementById('salvarEmergMeta');
+      if (salvarEmergMeta) salvarEmergMeta.addEventListener('click', () => {
+        state.emergencyWeeklyGoal = parseMoeda(document.getElementById('emergMetaSemanal').value);
+        saveState();
+        renderEmergenciais();
+        persistUI();
+      });
 
       document.getElementById('lancEmpresa').addEventListener('change', atualizarDestaqueEmpresaFormulario);
 
@@ -3826,6 +4053,8 @@ function getFlowRows(){
       autoLoginIfPossible();
       ui.customStart = getTodayStr();
       ui.customEnd = isoPlusDays(getTodayStr(), 7);
+      ui.emergCustomStart = getTodayStr();
+      ui.emergCustomEnd = isoPlusDays(getTodayStr(), 6);
       ui.emergCompetencia = getTodayStr().slice(0,7);
       updateAll();
       setPainelFluxoDiarioCollapsed(true);
