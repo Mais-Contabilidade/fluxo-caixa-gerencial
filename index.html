@@ -1313,6 +1313,7 @@
               <div class="pill-group emerg-period-pills" id="emergPeriodFilterGroup">
                 <button class="pill active accent" type="button" data-emerg-range="week">Semana</button>
                 <button class="pill" type="button" data-emerg-range="15d">Quinzenal</button>
+                <button class="pill" type="button" data-emerg-range="month">Mês atual</button>
                 <button class="pill" type="button" data-emerg-range="custom">Personalizado</button>
               </div>
             </div>
@@ -3153,13 +3154,19 @@ function getFlowRows(){
     }
 
     function getEmergencyPeriodBounds(){
-      const today = new Date(getTodayStr() + 'T12:00:00');
+      const todayStr = getTodayStr();
+      const today = new Date(todayStr + 'T12:00:00');
       if (ui.emergPeriodFilter === '15d') {
-        const start15 = getTodayStr();
-        return { start: start15, end: isoPlusDays(start15, 14), label: 'Quinzenal' };
+        const start15 = isoPlusDays(todayStr, -14);
+        return { start: start15, end: todayStr, label: 'Últimos 15 dias' };
+      }
+      if (ui.emergPeriodFilter === 'month') {
+        const [year, month] = todayStr.split('-');
+        const startMonth = `${year}-${month}-01`;
+        return { start: startMonth, end: todayStr, label: 'Mês atual' };
       }
       if (ui.emergPeriodFilter === 'custom') {
-        const start = ui.emergCustomStart || getTodayStr();
+        const start = ui.emergCustomStart || todayStr;
         const end = ui.emergCustomEnd || start;
         return { start: start <= end ? start : end, end: end >= start ? end : start, label: 'Personalizado' };
       }
@@ -3179,8 +3186,18 @@ function getFlowRows(){
     function getEmergencyGoalForPeriod(bounds){
       const start = new Date(bounds.start + 'T12:00:00');
       const end = new Date(bounds.end + 'T12:00:00');
-      const days = Math.max(1, Math.round((end - start) / 86400000) + 1);
-      return Number(state.emergencyWeeklyGoal || 0) * (days / 7);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+
+      let workdays = 0;
+      const cursor = new Date(start);
+      while (cursor <= end) {
+        const day = cursor.getDay();
+        if (day !== 0) workdays += 1; // considera apenas segunda a sábado
+        cursor.setDate(cursor.getDate() + 1);
+      }
+
+      if (workdays <= 0) return 0;
+      return Number(state.emergencyWeeklyGoal || 0) * (workdays / 6);
     }
 
     function renderEmergenciais(){
