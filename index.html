@@ -1280,6 +1280,7 @@
                   <th>Empresa</th>
                   <th>Tipo</th>
                   <th>Descrição</th>
+                  <th>Observações</th>
                   <th>Valor</th>
                   <th>Data</th>
                   <th>Status</th>
@@ -3121,7 +3122,7 @@ function getFlowRows(){
       });
 
       if (!items.length){
-        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Nenhum lançamento encontrado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Nenhum lançamento encontrado.</td></tr>';
         return;
       }
 
@@ -3137,6 +3138,9 @@ function getFlowRows(){
             <td><span class="status-badge ${item.tipo === 'despesa' ? 'vencida' : 'realizar'}">${item.tipo}</span></td>
             <td>
               <div>${escapeHtml(item.descricao)}</div>
+            </td>
+            <td>
+              <div class="small muted">${escapeHtml(item.observacao || '—')}</div>
             </td>
             <td class="value ${item.tipo === 'despesa' ? 'saida' : 'entrada'}">R$ ${formatarValor(valor)}</td>
             <td>${formatDateLabel(item.tipo === 'despesa' ? item.vencimento : item.data)}</td>
