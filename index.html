@@ -1716,8 +1716,11 @@
         manualBalances: {
           'malut-ferragens': { saldo: 11581.62, atualizadoEm: hoje + 'T' + agora }
         },
-        emergencyWeeklyGoal: 1500,
-        version: 7
+        emergencyWeeklyGoals: {
+          'malut-pneus': 750,
+          'malut-ferragens': 750
+        },
+        version: 8
       };
     }
 
@@ -1747,7 +1750,18 @@
       nextState.dataBaseVisual = getTodayStr();
       nextState.cashBalances = mergeCashBalances(nextState.cashBalances || {});
       nextState.manualBalances = mergeManualBalances(nextState.manualBalances || {});
-      nextState.emergencyWeeklyGoal = Number(nextState.emergencyWeeklyGoal || 0);
+      const legacyEmergencyGoal = Number(nextState.emergencyWeeklyGoal || 0);
+      const nextEmergencyWeeklyGoals = nextState.emergencyWeeklyGoals && typeof nextState.emergencyWeeklyGoals === 'object'
+        ? nextState.emergencyWeeklyGoals
+        : {
+            'malut-pneus': legacyEmergencyGoal,
+            'malut-ferragens': legacyEmergencyGoal
+          };
+      nextState.emergencyWeeklyGoals = {
+        'malut-pneus': Number(nextEmergencyWeeklyGoals['malut-pneus'] || 0),
+        'malut-ferragens': Number(nextEmergencyWeeklyGoals['malut-ferragens'] || 0)
+      };
+      delete nextState.emergencyWeeklyGoal;
       nextState.ferragensBalanceMode = 'caixa';
       return nextState;
     }
@@ -2132,6 +2146,21 @@
     function getEmergencyCompetence(item){
       const ref = item.dataEfetiva || item.vencimento || getTodayStr();
       return String(ref).slice(0,7);
+    }
+
+    function getEmergencyWeeklyGoalBase(){
+      const goals = state.emergencyWeeklyGoals || {};
+      if (ui.companyView === 'ambas') {
+        return Number(goals['malut-pneus'] || 0) + Number(goals['malut-ferragens'] || 0);
+      }
+      return Number(goals[ui.companyView] || 0);
+    }
+
+    function getEmergencyWeeklyGoalLabel(){
+      if (ui.companyView === 'ambas') {
+        return `Soma das bases · Pneus R$ ${formatarValor(Number(state.emergencyWeeklyGoals?.['malut-pneus'] || 0))} + Ferragens R$ ${formatarValor(Number(state.emergencyWeeklyGoals?.['malut-ferragens'] || 0))}`;
+      }
+      return `Base semanal da visualização: R$ ${formatarValor(getEmergencyWeeklyGoalBase())}`;
     }
 
     function formatCompetenceLabel(comp){
@@ -3187,7 +3216,7 @@ function getFlowRows(){
       };
     }
 
-    function getEmergencyGoalForPeriod(bounds){
+    function getEmergencyGoalForPeriod(bounds, weeklyGoalBase = getEmergencyWeeklyGoalBase()){
       const start = new Date(bounds.start + 'T12:00:00');
       const end = new Date(bounds.end + 'T12:00:00');
       if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
@@ -3201,7 +3230,7 @@ function getFlowRows(){
       }
 
       if (workdays <= 0) return 0;
-      return Number(state.emergencyWeeklyGoal || 0) * (workdays / 6);
+      return Number(weeklyGoalBase || 0) * (workdays / 6);
     }
 
     function renderEmergenciais(){
@@ -3225,7 +3254,8 @@ function getFlowRows(){
       const qtd = items.length;
       const ticket = qtd ? total / qtd : 0;
       const empresasAtivas = new Set(items.map(item => item.empresa)).size;
-      const metaPeriodo = getEmergencyGoalForPeriod(bounds);
+      const metaSemanalBase = getEmergencyWeeklyGoalBase();
+      const metaPeriodo = getEmergencyGoalForPeriod(bounds, metaSemanalBase);
       const diferencaMeta = total - metaPeriodo;
       const statusMeta = metaPeriodo <= 0
         ? { label: 'Meta não definida', cls: 'meta-status-alerta', helper: 'Cadastre a meta semanal para acompanhar o limite emergencial.' }
@@ -3237,7 +3267,7 @@ function getFlowRows(){
       resumo.innerHTML = `
         <div class="kpi-card red"><div class="kpi-label">Gasto emergencial</div><div class="kpi-value">R$ ${formatarValor(total)}</div><div class="kpi-trend">${periodoTexto}</div></div>
         <div class="kpi-card blue"><div class="kpi-label">Quantidade</div><div class="kpi-value">${qtd}</div><div class="kpi-trend">Lançamentos no filtro</div></div>
-        <div class="kpi-card teal"><div class="kpi-label">Meta do período</div><div class="kpi-value">R$ ${formatarValor(metaPeriodo)}</div><div class="kpi-trend">Base semanal: R$ ${formatarValor(state.emergencyWeeklyGoal || 0)}</div></div>
+        <div class="kpi-card teal"><div class="kpi-label">Meta do período</div><div class="kpi-value">R$ ${formatarValor(metaPeriodo)}</div><div class="kpi-trend">${getEmergencyWeeklyGoalLabel()}</div></div>
         <div class="kpi-card ${metaPeriodo > 0 && diferencaMeta > 0 ? 'red' : 'green'}"><div class="kpi-label">Status da meta</div><div class="kpi-value ${statusMeta.cls}">${statusMeta.label}</div><div class="kpi-trend">${statusMeta.helper}</div></div>
       `;
 
@@ -3821,7 +3851,14 @@ function getFlowRows(){
       if (emergCustomStart) emergCustomStart.value = ui.emergCustomStart || getTodayStr();
       if (emergCustomEnd) emergCustomEnd.value = ui.emergCustomEnd || isoPlusDays(getTodayStr(), 6);
       const emergMeta = document.getElementById('emergMetaSemanal');
-      if (emergMeta) emergMeta.value = formatarValor(state.emergencyWeeklyGoal || 0);
+      if (emergMeta) {
+        emergMeta.value = formatarValor(getEmergencyWeeklyGoalBase());
+        emergMeta.readOnly = isCliente() || ui.companyView === 'ambas';
+        emergMeta.disabled = ui.companyView === 'ambas';
+        emergMeta.title = isCliente()
+          ? 'Cliente apenas visualiza a meta semanal.'
+          : (ui.companyView === 'ambas' ? 'Na visão Ambas, a meta é a soma das metas cadastradas por base.' : 'Meta semanal da base selecionada.');
+      }
       const pendComp = document.getElementById('pendenciaCompetenciaFiltro');
       if (pendComp) pendComp.value = ui.pendingSearchCompetencia || '';
       const pendNome = document.getElementById('pendenciaNomeFiltro');
@@ -3969,13 +4006,24 @@ function getFlowRows(){
       if (emergMetaSemanal) {
         emergMetaSemanal.addEventListener('input', () => formatarMoeda(emergMetaSemanal));
         emergMetaSemanal.addEventListener('blur', () => {
-          if (!emergMetaSemanal.value) emergMetaSemanal.value = formatarValor(state.emergencyWeeklyGoal || 0);
+          if (!emergMetaSemanal.value) emergMetaSemanal.value = formatarValor(getEmergencyWeeklyGoalBase());
         });
       }
 
       const salvarEmergMeta = document.getElementById('salvarEmergMeta');
       if (salvarEmergMeta) salvarEmergMeta.addEventListener('click', () => {
-        state.emergencyWeeklyGoal = parseMoeda(document.getElementById('emergMetaSemanal').value);
+        if (!isAdmin()) return;
+        if (ui.companyView === 'ambas') {
+          toast('Na visão Ambas, a meta é apenas visual. Selecione uma base para editar.', 'warning');
+          renderEmergenciais();
+          persistUI();
+          return;
+        }
+        const valorMeta = parseMoeda(document.getElementById('emergMetaSemanal').value);
+        state.emergencyWeeklyGoals = {
+          ...(state.emergencyWeeklyGoals || {}),
+          [ui.companyView]: valorMeta
+        };
         saveState();
         renderEmergenciais();
         persistUI();
