@@ -2579,6 +2579,13 @@
         : '';
     }
 
+    function getPendenciaSubtitle(item){
+      const baseLabel = String(EMPRESAS[item?.empresa]?.label || item?.empresaLabel || item?.empresaNome || 'Empresa').trim();
+      return baseLabel
+        .replace(/\s*•\s*Competência:\s*[^•]+/gi, '')
+        .trim();
+    }
+
     function renderPendencias(){
       const container = document.getElementById('listaPendencias');
       const today = getTodayStr();
@@ -2621,7 +2628,7 @@
                 <div class="pendencia-header">
                   <div>
                     <div class="pendencia-title">${escapeHtml(item.descricao)}</div>
-                    <div class="small muted">${escapeHtml(EMPRESAS[item.empresa]?.label || 'Empresa')} • Competência: ${escapeHtml(formatCompetenceLabel(getPendenciaCompetencia(item)))}</div>
+                    <div class="small muted">${escapeHtml(getPendenciaSubtitle(item))}</div>
                   </div>
                   <span class="tag ${priorityClass(item)}">${priorityLabel(item.prioridade)}</span>
                 </div>
