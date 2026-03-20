@@ -1517,8 +1517,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics-compat.js"></script>
   <script>
-    const STORAGE_KEY = 'fluxoCaixaMalutV4';
-    const AUTH_KEY = 'fluxoCaixaMalutAuth';
     const FIREBASE_STATE_COLLECTION = 'apps';
     const FIREBASE_STATE_DOC = 'fluxo-caixa-gerencial';
     const firebaseConfig = {
@@ -1573,6 +1571,7 @@
     let firebaseDb = null;
     let firebaseAnalyticsInstance = null;
     let firebaseReady = false;
+    let cloudUnsubscribe = null;
     let cloudSaveTimer = null;
     let suppressCloudSave = false;
 
@@ -1752,22 +1751,9 @@
     }
 
     function loadState(){
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (!saved) {
-        state = createDefaultState();
-        migrateLegacyData();
-        saveState();
-      } else {
-        try{
-          state = buildNormalizedState(JSON.parse(saved));
-          migrateLegacyData();
-          saveState();
-        }catch(e){
-          state = createDefaultState();
-          migrateLegacyData();
-          saveState();
-        }
-      }
+      state = buildNormalizedState(createDefaultState());
+      migrateLegacyData();
+      subscribeStateFromCloud();
       hydrateStateFromCloud();
     }
 
@@ -1800,19 +1786,38 @@
         }
         const remoteData = snap.data()?.state;
         if (!remoteData || typeof remoteData !== 'object') return;
-        suppressCloudSave = true;
-        state = buildNormalizedState(remoteData);
-        migrateLegacyData();
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        suppressCloudSave = false;
-        if (document.readyState !== 'loading') {
-          updateAll();
-          setPainelFluxoDiarioCollapsed(true);
-          setPainelPendenciasCollapsed(true);
-        }
+        applyCloudState(remoteData);
       }catch(e){
         suppressCloudSave = false;
       }
+    }
+
+    function applyCloudState(remoteData){
+      suppressCloudSave = true;
+      state = buildNormalizedState(remoteData);
+      migrateLegacyData();
+      suppressCloudSave = false;
+      if (document.readyState !== 'loading') {
+        updateAll();
+        setPainelFluxoDiarioCollapsed(true);
+        setPainelPendenciasCollapsed(true);
+      }
+    }
+
+    function subscribeStateFromCloud(){
+      if (!initFirebaseServices()) return;
+      if (cloudUnsubscribe) return;
+      try{
+        cloudUnsubscribe = firebaseDb
+          .collection(FIREBASE_STATE_COLLECTION)
+          .doc(FIREBASE_STATE_DOC)
+          .onSnapshot(snapshot => {
+            if (!snapshot.exists) return;
+            const remoteData = snapshot.data()?.state;
+            if (!remoteData || typeof remoteData !== 'object') return;
+            applyCloudState(remoteData);
+          }, () => {});
+      }catch(e){}
     }
 
     function mergeCashBalances(existing){
@@ -1927,7 +1932,6 @@
     }
 
     function saveState(){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       scheduleCloudSave();
     }
 
@@ -1943,9 +1947,6 @@
 
     function clearAuth(){
       currentAuth = null;
-      try{
-        localStorage.removeItem(AUTH_KEY);
-      }catch(e){}
     }
 
     function isAdmin(){
@@ -3565,6 +3566,10 @@ function getFlowRows(){
       toast(origem === 'emergencial' ? 'Despesa emergencial salva com sucesso.' : 'Lançamento salvo com sucesso.', 'success');
     }
 
+    function precisaSenhaParaLancamento(origem='lancamentos', isFinal=false){
+      return origem === 'emergencial' || origem === 'lancamentos' || isFinal;
+    }
+
     function editarLancamento(id, tipo, origem='lancamentos'){
       if (!isAdmin()) return;
       const list = tipo === 'receita' ? state.receitas : (origem === 'emergencial' ? state.emergenciais : state.despesas);
@@ -3572,10 +3577,12 @@ function getFlowRows(){
       if (!item) return;
 
       const isFinal = isCompletedStatus(item.status);
-      if (isFinal){
+      if (precisaSenhaParaLancamento(origem, isFinal)){
         ui.pendingPasswordAction = { action:'editar', id, tipo, origem };
         document.getElementById('senhaProtecao').value = '';
-        document.getElementById('senhaAcaoDescricao').textContent = 'Editar lançamento realizado';
+        document.getElementById('senhaAcaoDescricao').textContent = origem === 'emergencial'
+          ? 'Editar despesa emergencial'
+          : (isFinal ? 'Editar lançamento realizado' : 'Editar lançamento');
         abrirModal('modalSenha');
         return;
       }
@@ -3615,10 +3622,12 @@ function getFlowRows(){
 
     function excluirLancamento(id, tipo, isFinal, origem='lancamentos'){
       if (!isAdmin()) return;
-      if (isFinal){
+      if (precisaSenhaParaLancamento(origem, isFinal)){
         ui.pendingPasswordAction = { action:'excluir', id, tipo, origem };
         document.getElementById('senhaProtecao').value = '';
-        document.getElementById('senhaAcaoDescricao').textContent = 'Excluir lançamento realizado';
+        document.getElementById('senhaAcaoDescricao').textContent = origem === 'emergencial'
+          ? 'Excluir despesa emergencial'
+          : (isFinal ? 'Excluir lançamento realizado' : 'Excluir lançamento');
         abrirModal('modalSenha');
         return;
       }
