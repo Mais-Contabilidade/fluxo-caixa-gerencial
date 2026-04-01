@@ -4,13 +4,27 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fluxo de Caixa Diário | Malut</title>
+  <script>
+    (() => {
+      try {
+        const storedTheme = localStorage.getItem('fluxo-caixa-theme');
+        const theme = storedTheme === 'light' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root{
+      color-scheme:dark;
       --bg-primary:#0d1117;
       --bg-secondary:#161b22;
       --bg-card:#1c2128;
       --bg-hover:#252c35;
+      --bg-elevated:#202731;
+      --surface-soft:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.012));
       --border:#30363d;
       --border-light:#3d444d;
       --text-primary:#e6edf3;
@@ -23,17 +37,129 @@
       --accent-yellow:#d29922;
       --accent-purple:#a371f7;
       --shadow:0 10px 35px rgba(0,0,0,.28);
+      --shadow-soft:0 18px 40px rgba(0,0,0,.24);
+      --header-bg:rgba(22,27,34,.96);
+      --overlay-bg:rgba(0,0,0,.78);
+      --tooltip-bg:rgba(13,17,23,.98);
+      --login-screen-bg:
+        radial-gradient(circle at top left, rgba(63,185,165,.10), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(88,166,255,.08), transparent 26%),
+        #0a0f17;
+      --login-border:rgba(255,255,255,.08);
+      --login-card-bg:linear-gradient(180deg,rgba(17,24,39,.98),rgba(12,18,28,.98));
+      --login-side-bg:linear-gradient(180deg,rgba(16,22,34,.98),rgba(12,18,28,.98));
+      --login-copy-text:#98a2b3;
+      --login-label:#c2c8d3;
+      --login-input-bg:#0b1220;
+      --login-input-border:rgba(255,255,255,.10);
+      --login-input-color:#f3f4f6;
+      --login-placeholder:#667085;
+      --login-visual-bg:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+      --login-visual-card-bg:#0d1522;
+      --login-visual-chart-bg:#0b1220;
+      --login-visual-title:#dce3ec;
+      --login-visual-subtitle:#98a2b3;
+      --login-title:#f7fafc;
+      --login-kpi-text:#f8fafc;
+      --login-info-bg:rgba(255,255,255,.03);
+      --login-info-text:#f3f6fb;
+      --login-info-subtext:#b4becc;
+      --theme-toggle-bg:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+      --theme-toggle-border:rgba(255,255,255,.12);
+      --theme-toggle-thumb:linear-gradient(180deg,#f8fbff,#dce6f0);
+      --theme-toggle-icon:#dbe6f4;
+      --theme-toggle-icon-muted:#8b949e;
       --critico:#f85149;
       --alto:#d29922;
       --medio:#58a6ff;
       --baixo:#3fb9a5;
       --aclassificar:#8b949e;
     }
+    [data-theme="light"]{
+      color-scheme:light;
+      --bg-primary:#f4f6f8;
+      --bg-secondary:#edf2f6;
+      --bg-card:#fbfcfd;
+      --bg-hover:#f0f4f7;
+      --bg-elevated:#ffffff;
+      --surface-soft:linear-gradient(180deg,rgba(255,255,255,.88),rgba(246,249,251,.96));
+      --border:#d9e0e7;
+      --border-light:#cbd5df;
+      --text-primary:#1f2937;
+      --text-secondary:#5b6573;
+      --text-muted:#7b8794;
+      --accent-green:#2f8f57;
+      --accent-teal:#2f8f86;
+      --accent-blue:#427db8;
+      --accent-red:#c15b58;
+      --accent-yellow:#b2872f;
+      --accent-purple:#7f6ccf;
+      --shadow:0 10px 28px rgba(15,23,42,.07);
+      --shadow-soft:0 18px 40px rgba(15,23,42,.08);
+      --header-bg:rgba(250,252,253,.88);
+      --overlay-bg:rgba(31,41,55,.18);
+      --tooltip-bg:rgba(255,255,255,.98);
+      --login-screen-bg:
+        radial-gradient(circle at top left, rgba(47,143,134,.10), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(66,125,184,.08), transparent 28%),
+        linear-gradient(180deg,#f5f7fa,#edf2f6);
+      --login-border:rgba(148,163,184,.18);
+      --login-card-bg:linear-gradient(180deg,rgba(255,255,255,.98),rgba(247,250,252,.98));
+      --login-side-bg:linear-gradient(180deg,rgba(248,250,252,.98),rgba(240,244,247,.98));
+      --login-copy-text:#5f6b7a;
+      --login-label:#526071;
+      --login-input-bg:#f8fafc;
+      --login-input-border:rgba(148,163,184,.26);
+      --login-input-color:#1f2937;
+      --login-placeholder:#8a96a6;
+      --login-visual-bg:linear-gradient(180deg,rgba(255,255,255,.92),rgba(243,247,250,.92));
+      --login-visual-card-bg:#f8fafc;
+      --login-visual-chart-bg:#f5f8fb;
+      --login-visual-title:#314155;
+      --login-visual-subtitle:#647183;
+      --login-title:#1f2937;
+      --login-kpi-text:#243142;
+      --login-info-bg:rgba(255,255,255,.78);
+      --login-info-text:#283548;
+      --login-info-subtext:#667487;
+      --theme-toggle-bg:linear-gradient(180deg,#eef4f7,#e6edf2);
+      --theme-toggle-border:rgba(148,163,184,.24);
+      --theme-toggle-thumb:linear-gradient(180deg,#ffffff,#edf2f7);
+      --theme-toggle-icon:#576579;
+      --theme-toggle-icon-muted:#97a3b3;
+      --critico:#c15b58;
+      --alto:#b2872f;
+      --medio:#427db8;
+      --baixo:#2f8f86;
+      --aclassificar:#7b8794;
+    }
     *{margin:0;padding:0;box-sizing:border-box}
+    body,
+    .header,
+    .tabs,
+    .tab,
+    .panel,
+    .kpi-card,
+    .resumo-card,
+    .resumo-card-mini,
+    .projecao-card,
+    .pendencia-item,
+    .day-card,
+    .btn,
+    input,
+    select,
+    textarea,
+    .modal,
+    .toast,
+    .theme-toggle,
+    .theme-toggle-thumb{
+      transition:background-color .24s ease,border-color .24s ease,color .24s ease,box-shadow .24s ease,transform .24s ease,opacity .24s ease;
+    }
     html,body{min-height:100%;width:100%;max-width:100%;overflow-x:hidden;overscroll-behavior-x:none;touch-action:pan-y}
     body{
       font-family:'Plus Jakarta Sans',sans-serif;
       background:var(--bg-primary);
+      background-image:none;
       color:var(--text-primary);
       line-height:1.5;
       display:flex;
@@ -58,7 +184,7 @@
     .mono{font-family:'JetBrains Mono',monospace}
     .header{
       position:sticky;top:0;z-index:40;
-      background:rgba(22,27,34,.96);
+      background:var(--header-bg);
       backdrop-filter:blur(10px);
       border-bottom:1px solid var(--border);
       padding:1rem 1.25rem;
@@ -325,7 +451,7 @@
     .flow-details{display:grid;gap:.3rem;min-width:260px}
     .chart-wrap{position:relative}
     .chart-panel,.chart-panel .panel-body,.chart-wrap{overflow:visible}
-    .chart-tooltip{position:absolute;pointer-events:none;z-index:20;width:min(340px,calc(100vw - 32px));min-width:260px;max-width:min(360px,calc(100vw - 32px));background:rgba(13,17,23,.98);border:1px solid var(--border-light);border-radius:14px;padding:.75rem .85rem;box-shadow:var(--shadow);opacity:0;transform:none;transition:opacity .12s ease;backdrop-filter:blur(10px);left:12px;top:12px}
+    .chart-tooltip{position:absolute;pointer-events:none;z-index:20;width:min(340px,calc(100vw - 32px));min-width:260px;max-width:min(360px,calc(100vw - 32px));background:var(--tooltip-bg);border:1px solid var(--border-light);border-radius:14px;padding:.75rem .85rem;box-shadow:var(--shadow);opacity:0;transform:none;transition:opacity .12s ease;backdrop-filter:blur(10px);left:12px;top:12px}
     .chart-tooltip.active{opacity:1}
     .chart-tooltip-title{font-size:.82rem;font-weight:800;margin-bottom:.5rem}
     .chart-tooltip-grid{display:grid;gap:.28rem}
@@ -504,7 +630,7 @@
     .chart-panel .panel-body{padding-top:.85rem}
     .chart-wrap{
       position:relative;overflow:hidden;padding:.8rem;border:1px solid var(--border);
-      border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01))
+      border-radius:16px;background:var(--surface-soft)
     }
     .legend{
       display:flex;gap:.7rem;flex-wrap:wrap;font-size:.74rem;color:var(--text-secondary)
@@ -512,7 +638,7 @@
     .legend span{display:inline-flex;align-items:center;gap:.35rem}
     .legend i{width:11px;height:11px;border-radius:999px;display:inline-block}
     .modal-overlay,.login-screen{
-      position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(9px);
+      position:fixed;inset:0;background:var(--overlay-bg);backdrop-filter:blur(9px);
       display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;
     }
     .modal-overlay.active,.login-screen.active{display:flex}
@@ -556,10 +682,7 @@
       padding:1rem;
       overflow:auto;
       align-items:center;
-      background:
-        radial-gradient(circle at top left, rgba(63,185,165,.10), transparent 32%),
-        radial-gradient(circle at bottom right, rgba(88,166,255,.08), transparent 26%),
-        #0a0f17;
+      background:var(--login-screen-bg);
     }
     .login-shell{
       width:min(460px,100%);
@@ -577,8 +700,8 @@
       position:relative;
       border-radius:24px;
       overflow:hidden;
-      border:1px solid rgba(255,255,255,.08);
-      box-shadow:0 24px 60px rgba(0,0,0,.32);
+      border:1px solid var(--login-border);
+      box-shadow:var(--shadow-soft);
     }
     .login-card{
       padding:1.5rem;
@@ -586,14 +709,14 @@
       flex-direction:column;
       justify-content:center;
       gap:1.2rem;
-      background:linear-gradient(180deg,rgba(17,24,39,.98),rgba(12,18,28,.98));
+      background:var(--login-card-bg);
     }
     .login-side{
       padding:1.35rem;
       display:grid;
       gap:1rem;
       align-content:space-between;
-      background:linear-gradient(180deg,rgba(16,22,34,.98),rgba(12,18,28,.98));
+      background:var(--login-side-bg);
     }
     .login-badge,
     .login-kicker{
@@ -623,7 +746,7 @@
     }
     .login-card p,
     .login-side p{
-      color:#98a2b3;
+      color:var(--login-copy-text);
       margin:0;
       font-size:.96rem;
       line-height:1.55;
@@ -637,7 +760,7 @@
     .login-form .form-group label{
       font-size:.86rem;
       font-weight:700;
-      color:#c2c8d3;
+      color:var(--login-label);
     }
     .login-form input{
       min-width:0;
@@ -645,12 +768,12 @@
       height:52px;
       border-radius:14px;
       padding:.92rem 1rem;
-      background:#0b1220;
-      border:1px solid rgba(255,255,255,.10);
-      color:#f3f4f6;
+      background:var(--login-input-bg);
+      border:1px solid var(--login-input-border);
+      color:var(--login-input-color);
       font-size:.97rem;
     }
-    .login-form input::placeholder{color:#667085}
+    .login-form input::placeholder{color:var(--login-placeholder)}
     .login-form-actions{display:grid;gap:.7rem;margin-top:.2rem}
     .login-form-actions .btn{
       width:100%;
@@ -675,7 +798,7 @@
       margin:0;
       max-width:15ch;
       text-wrap:balance;
-      color:#f7fafc;
+      color:var(--login-title);
     }
     .login-visual{
       display:grid;
@@ -683,7 +806,7 @@
       padding:1rem;
       border-radius:22px;
       border:1px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+      background:var(--login-visual-bg);
     }
     .login-visual-top{
       display:flex;
@@ -694,12 +817,12 @@
     }
     .login-visual-title{
       font-size:.84rem;
-      color:#dce3ec;
+      color:var(--login-visual-title);
       font-weight:800;
     }
     .login-visual-subtitle{
       font-size:.74rem;
-      color:#98a2b3;
+      color:var(--login-copy-text);
       margin-top:.2rem;
     }
     .login-visual-badge{
@@ -723,13 +846,13 @@
     .login-visual-kpi{
       padding:.9rem;
       border-radius:16px;
-      background:#0d1522;
+      background:var(--login-visual-card-bg);
       border:1px solid rgba(255,255,255,.06);
     }
     .login-visual-kpi span{
       display:block;
       font-size:.68rem;
-      color:#98a2b3;
+      color:var(--login-visual-subtitle);
       text-transform:uppercase;
       letter-spacing:.05em;
       margin-bottom:.4rem;
@@ -740,7 +863,7 @@
       font-family:'JetBrains Mono',monospace;
       font-size:1rem;
       line-height:1.2;
-      color:#f8fafc;
+      color:var(--login-kpi-text);
     }
     .login-visual-chart{
       display:grid;
@@ -750,8 +873,8 @@
       min-height:160px;
       padding:.85rem;
       border-radius:18px;
-      background:#0b1220;
-      border:1px solid rgba(255,255,255,.06);
+      background:var(--login-visual-chart-bg);
+      border:1px solid var(--login-border);
     }
     .login-bar{
       border-radius:999px 999px 10px 10px;
@@ -770,20 +893,141 @@
       padding:.95rem 1rem;
       border-radius:16px;
       border:1px solid rgba(255,255,255,.08);
-      background:rgba(255,255,255,.03);
+      background:var(--login-info-bg);
     }
     .login-info-card strong{
       display:block;
       font-size:.9rem;
-      color:#f3f6fb;
+      color:var(--login-info-text);
       margin-bottom:.3rem;
     }
     .login-info-card .small{
-      color:#b4becc;
+      color:var(--login-info-subtext);
       font-size:.82rem;
       line-height:1.45;
       margin-top:0;
     }
+    .theme-switcher{
+      margin-left:auto;
+      display:inline-flex;
+      align-items:center;
+      gap:.7rem;
+      padding:.36rem .42rem .36rem .78rem;
+      border-radius:999px;
+      background:var(--bg-card);
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);
+      min-height:48px;
+    }
+    .theme-switcher-label{
+      font-size:.72rem;
+      font-weight:800;
+      letter-spacing:.05em;
+      text-transform:uppercase;
+      color:var(--text-secondary);
+      white-space:nowrap;
+    }
+    .theme-toggle{
+      position:relative;
+      width:72px;
+      height:38px;
+      border-radius:999px;
+      border:1px solid var(--theme-toggle-border);
+      background:var(--theme-toggle-bg);
+      padding:0;
+      cursor:pointer;
+      flex-shrink:0;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .theme-toggle-track{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 .72rem;
+      pointer-events:none;
+    }
+    .theme-toggle-icon{
+      font-size:.95rem;
+      line-height:1;
+      color:var(--theme-toggle-icon-muted);
+      transition:color .24s ease, opacity .24s ease;
+      opacity:.75;
+    }
+    .theme-toggle-thumb{
+      position:absolute;
+      top:3px;
+      left:3px;
+      width:30px;
+      height:30px;
+      border-radius:50%;
+      background:var(--theme-toggle-thumb);
+      box-shadow:0 6px 16px rgba(15,23,42,.18);
+      transform:translateX(0);
+    }
+    [data-theme="light"] .theme-toggle-thumb{transform:translateX(34px)}
+    [data-theme="dark"] .theme-toggle-icon--moon,
+    [data-theme="light"] .theme-toggle-icon--sun{
+      color:var(--theme-toggle-icon);
+      opacity:1;
+    }
+    [data-theme="light"] .theme-switcher{
+      background:rgba(255,255,255,.72);
+      backdrop-filter:blur(10px);
+    }
+    [data-theme="light"] .chart-tooltip{
+      box-shadow:0 18px 40px rgba(15,23,42,.10);
+    }
+    [data-theme="light"] .kpi-card,
+    [data-theme="light"] .panel,
+    [data-theme="light"] .resumo-card,
+    [data-theme="light"] .resumo-card-mini,
+    [data-theme="light"] .projecao-card,
+    [data-theme="light"] .day-card,
+    [data-theme="light"] .pendencia-item,
+    [data-theme="light"] .flow-day-summary,
+    [data-theme="light"] .flow-metric-card,
+    [data-theme="light"] .flow-relation-summary,
+    [data-theme="light"] .detail-card,
+    [data-theme="light"] .insight-card,
+    [data-theme="light"] .pendencia-summary-card,
+    [data-theme="light"] .pendencia-base-card,
+    [data-theme="light"] .info-box,
+    [data-theme="light"] .toast,
+    [data-theme="light"] .modal{
+      box-shadow:var(--shadow);
+    }
+    [data-theme="light"] .tabs{
+      background:transparent;
+    }
+    [data-theme="light"] .pill.active,
+    [data-theme="light"] .pill:hover{
+      background:rgba(31,41,55,.04);
+    }
+    [data-theme="light"] .btn-ghost-discreet{
+      background:rgba(255,255,255,.58);
+      border-color:rgba(148,163,184,.18);
+      color:var(--text-secondary);
+    }
+    [data-theme="light"] .btn-ghost-discreet:hover{
+      background:rgba(255,255,255,.92);
+      color:var(--text-primary);
+      border-color:rgba(148,163,184,.28);
+    }
+    [data-theme="light"] .entity-highlight{
+      background:linear-gradient(135deg,rgba(47,143,134,.08),rgba(47,143,87,.07));
+      border-color:rgba(47,143,134,.16);
+    }
+    [data-theme="light"] .login-badge,
+    [data-theme="light"] .login-kicker{
+      color:#24786f;
+      background:rgba(47,143,134,.10);
+      border-color:rgba(47,143,134,.18);
+    }
+    [data-theme="light"] tr.hoje td{background:rgba(47,143,134,.08)}
+    [data-theme="light"] tr.fim-semana td{background:rgba(66,125,184,.05)}
+    [data-theme="light"] tr.saldo-negativo td{background:rgba(193,91,88,.08)}
     .mobile-card-list{display:none}
     .small{font-size:.74rem}
     .sr-only{position:absolute;left:-9999px}
@@ -886,6 +1130,7 @@
       .emerg-period-pills{width:100%}
 
       .login-screen{padding:.5rem;align-items:center;justify-content:center;min-height:100dvh}
+      .theme-switcher{margin-left:0}
       .login-card,.login-side{padding:.95rem}
       .login-copy h2{font-size:1.42rem}
       .login-side h3{font-size:1.72rem}
@@ -926,6 +1171,16 @@
     <div class="header-content">
       <div class="logo">
         <h1>Fluxo de Caixa</h1>
+      </div>
+      <div class="theme-switcher" aria-label="Controle de tema">
+        <span class="theme-switcher-label">Tema</span>
+        <button type="button" class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Alternar entre modo escuro e modo claro" aria-pressed="false" title="Alternar tema">
+          <span class="theme-toggle-track" aria-hidden="true">
+            <span class="theme-toggle-icon theme-toggle-icon--sun">☀</span>
+            <span class="theme-toggle-icon theme-toggle-icon--moon">☾</span>
+          </span>
+          <span class="theme-toggle-thumb" aria-hidden="true"></span>
+        </button>
       </div>
       <div class="header-actions header-actions--hidden" id="headerActions" aria-hidden="true">
         <input type="text" id="saldoAtual" oninput="formatarMoeda(this)" data-admin-only="true">
@@ -3196,6 +3451,12 @@ function getFlowRows(){
     function getEmergencyPeriodBounds(){
       const todayStr = getTodayStr();
       const today = new Date(todayStr + 'T12:00:00');
+      const toLocalISODate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2,'0');
+        const day = String(date.getDate()).padStart(2,'0');
+        return `${year}-${month}-${day}`;
+      };
       if (ui.emergPeriodFilter === '15d') {
         const start15 = isoPlusDays(todayStr, -14);
         return { start: start15, end: todayStr, label: 'Últimos 15 dias' };
@@ -3217,8 +3478,8 @@ function getFlowRows(){
       const end = new Date(start);
       end.setDate(end.getDate() + 6);
       return {
-        start: start.toISOString().slice(0,10),
-        end: end.toISOString().slice(0,10),
+        start: toLocalISODate(start),
+        end: toLocalISODate(end),
         label: 'Semanal'
       };
     }
@@ -3247,20 +3508,29 @@ function getFlowRows(){
       if (!select || !resumo || !tbody) return;
 
       const itemsBase = getEmergencyEntries();
-      const competencias = Array.from(new Set(itemsBase.map(getEmergencyCompetence))).sort().reverse();
+      const bounds = getEmergencyPeriodBounds();
       const fallback = getTodayStr().slice(0,7);
-      if (!ui.emergCompetencia || !competencias.includes(ui.emergCompetencia)) ui.emergCompetencia = competencias[0] || fallback;
+      const competencias = Array.from(new Set(itemsBase.map(getEmergencyCompetence))).sort().reverse();
+      const competenciasVisiveis = Array.from(new Set(
+        itemsBase
+          .filter(item => {
+            const itemDate = item.dataEfetiva || item.vencimento || '';
+            return itemDate >= bounds.start && itemDate <= bounds.end;
+          })
+          .map(getEmergencyCompetence)
+      )).sort();
+      const competenciaReferencia = competenciasVisiveis.length
+        ? competenciasVisiveis[competenciasVisiveis.length - 1]
+        : (ui.emergCompetencia && competencias.includes(ui.emergCompetencia) ? ui.emergCompetencia : (competencias[0] || fallback));
+      ui.emergCompetencia = competenciaReferencia;
 
       select.innerHTML = (competencias.length ? competencias : [fallback]).map(comp => `<option value="${comp}" ${comp === ui.emergCompetencia ? 'selected' : ''}>${formatCompetenceLabel(comp)}</option>`).join('');
-      const bounds = getEmergencyPeriodBounds();
       const items = itemsBase.filter(item => {
         const itemDate = item.dataEfetiva || item.vencimento || '';
-        return getEmergencyCompetence(item) === ui.emergCompetencia && itemDate >= bounds.start && itemDate <= bounds.end;
+        return itemDate >= bounds.start && itemDate <= bounds.end;
       }).sort((a,b) => (b.dataEfetiva || b.vencimento || '').localeCompare(a.dataEfetiva || a.vencimento || ''));
       const total = items.reduce((acc, item) => acc + Number(item.valorPago || item.valorOriginal || 0), 0);
       const qtd = items.length;
-      const ticket = qtd ? total / qtd : 0;
-      const empresasAtivas = new Set(items.map(item => item.empresa)).size;
       const metaSemanalBase = getEmergencyWeeklyGoalBase();
       const metaPeriodo = getEmergencyGoalForPeriod(bounds, metaSemanalBase);
       const diferencaMeta = total - metaPeriodo;
@@ -3269,11 +3539,14 @@ function getFlowRows(){
         : diferencaMeta > 0
           ? { label: 'Meta ultrapassada', cls: 'meta-status-estourada', helper: `Acima da meta em R$ ${formatarValor(diferencaMeta)}.` }
           : { label: 'Dentro da meta', cls: 'meta-status-ok', helper: `Folga de R$ ${formatarValor(Math.abs(diferencaMeta))} no período.` };
+      const referenciaCompetenciaTexto = competenciasVisiveis.length > 1
+        ? `Competências visíveis: ${competenciasVisiveis.map(formatCompetenceLabel).join(' • ')}`
+        : `Competência de referência: ${formatCompetenceLabel(ui.emergCompetencia)}`;
       const periodoTexto = `${bounds.label}: ${formatDateLabel(bounds.start)} a ${formatDateLabel(bounds.end)}`;
 
       resumo.innerHTML = `
         <div class="kpi-card red"><div class="kpi-label">Gasto emergencial</div><div class="kpi-value">R$ ${formatarValor(total)}</div><div class="kpi-trend">${periodoTexto}</div></div>
-        <div class="kpi-card blue"><div class="kpi-label">Quantidade</div><div class="kpi-value">${qtd}</div><div class="kpi-trend">Lançamentos no filtro</div></div>
+        <div class="kpi-card blue"><div class="kpi-label">Quantidade</div><div class="kpi-value">${qtd}</div><div class="kpi-trend">${referenciaCompetenciaTexto}</div></div>
         <div class="kpi-card teal"><div class="kpi-label">Meta do período</div><div class="kpi-value">R$ ${formatarValor(metaPeriodo)}</div><div class="kpi-trend">${getEmergencyWeeklyGoalLabel()}</div></div>
         <div class="kpi-card ${metaPeriodo > 0 && diferencaMeta > 0 ? 'red' : 'green'}"><div class="kpi-label">Status da meta</div><div class="kpi-value ${statusMeta.cls}">${statusMeta.label}</div><div class="kpi-trend">${statusMeta.helper}</div></div>
       `;
@@ -4135,7 +4408,46 @@ function getFlowRows(){
         .replace(/'/g,'&#039;');
     }
 
+    const THEME_STORAGE_KEY = 'fluxo-caixa-theme';
+
+    function getStoredTheme(){
+      try{
+        const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+        return storedTheme === 'light' ? 'light' : 'dark';
+      }catch(e){
+        return 'dark';
+      }
+    }
+
+    function syncThemeToggle(theme){
+      const button = document.getElementById('themeToggle');
+      if (!button) return;
+      const isLight = theme === 'light';
+      button.setAttribute('aria-pressed', String(isLight));
+      button.dataset.theme = theme;
+      button.title = isLight ? 'Ativar modo escuro' : 'Ativar modo claro';
+      button.setAttribute('aria-label', isLight ? 'Ativar modo escuro' : 'Ativar modo claro');
+    }
+
+    function applyTheme(theme, persist = true){
+      const nextTheme = theme === 'light' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', nextTheme);
+      if (document.body) document.body.setAttribute('data-theme', nextTheme);
+      syncThemeToggle(nextTheme);
+      if (persist){
+        try{
+          localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+        }catch(e){}
+      }
+    }
+
+    function toggleTheme(){
+      const currentTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+      applyTheme(currentTheme === 'light' ? 'dark' : 'light');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+      applyTheme(getStoredTheme(), false);
       loadState();
       clearAuth();
       setupEvents();
