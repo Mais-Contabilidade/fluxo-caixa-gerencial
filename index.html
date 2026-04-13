@@ -1197,7 +1197,7 @@
       <button class="tab" data-tab="semana">Visão Semanal</button>
       <button class="tab" data-tab="caixa">Visão de Caixa</button>
       <button class="tab" data-tab="lancamentos">Lançamentos</button>
-      <button class="tab" data-tab="emergenciais">Emergenciais</button>
+      <button class="tab" data-tab="emergenciais">Urgentes</button>
     </div>
   </div>
 
@@ -1554,8 +1554,8 @@
       <div class="toolbar emerg-toolbar">
         <div class="toolbar-left">
           <div>
-            <div class="panel-title">Despesas Emergenciais</div>
-            <div class="panel-subtitle">Controle de despesas emergenciais já pagas no ato do lançamento, com leitura de valor gasto, quantidade e acompanhamento contra meta.</div>
+            <div class="panel-title">Despesas Urgentes e Não Planejadas</div>
+            <div class="panel-subtitle">Controle de despesas não planejadas e/ou com necessidade de pagamento imediato, especialmente quando relacionadas à continuidade da operação.</div>
           </div>
         </div>
         <div class="emerg-filter-row">
@@ -1593,7 +1593,7 @@
             </div>
           </div>
           <div class="toolbar-actions admin-only" style="margin-left:auto">
-            <button class="btn btn-primary" onclick="abrirModalEmergencial()">+ Nova Emergencial</button>
+            <button class="btn btn-primary" onclick="abrirModalEmergencial()">+ Nova Despesa Urgente</button>
           </div>
         </div>
       </div>
@@ -2158,7 +2158,7 @@
           id: item.id || Date.now() + 2000 + idx,
           empresa: item.empresa || 'malut-pneus',
           conta: item.conta || guessConta(item.empresa || 'malut-pneus'),
-          descricao: item.descricao || item.fornecedor || 'Despesa emergencial',
+          descricao: item.descricao || item.fornecedor || 'Despesa urgente',
           valorOriginal: valorEmergencial,
           valorRestante: 0,
           valorPago: Number(item.valorPago || valorEmergencial),
@@ -3535,7 +3535,7 @@ function getFlowRows(){
       const metaPeriodo = getEmergencyGoalForPeriod(bounds, metaSemanalBase);
       const diferencaMeta = total - metaPeriodo;
       const statusMeta = metaPeriodo <= 0
-        ? { label: 'Meta não definida', cls: 'meta-status-alerta', helper: 'Cadastre a meta semanal para acompanhar o limite emergencial.' }
+        ? { label: 'Meta não definida', cls: 'meta-status-alerta', helper: 'Cadastre a meta semanal para acompanhar o limite de urgentes.' }
         : diferencaMeta > 0
           ? { label: 'Meta ultrapassada', cls: 'meta-status-estourada', helper: `Acima da meta em R$ ${formatarValor(diferencaMeta)}.` }
           : { label: 'Dentro da meta', cls: 'meta-status-ok', helper: `Folga de R$ ${formatarValor(Math.abs(diferencaMeta))} no período.` };
@@ -3545,14 +3545,14 @@ function getFlowRows(){
       const periodoTexto = `${bounds.label}: ${formatDateLabel(bounds.start)} a ${formatDateLabel(bounds.end)}`;
 
       resumo.innerHTML = `
-        <div class="kpi-card red"><div class="kpi-label">Gasto emergencial</div><div class="kpi-value">R$ ${formatarValor(total)}</div><div class="kpi-trend">${periodoTexto}</div></div>
+        <div class="kpi-card red"><div class="kpi-label">Despesa Urgente</div><div class="kpi-value">R$ ${formatarValor(total)}</div><div class="kpi-trend">${periodoTexto}</div></div>
         <div class="kpi-card blue"><div class="kpi-label">Quantidade</div><div class="kpi-value">${qtd}</div><div class="kpi-trend">${referenciaCompetenciaTexto}</div></div>
         <div class="kpi-card teal"><div class="kpi-label">Meta do período</div><div class="kpi-value">R$ ${formatarValor(metaPeriodo)}</div><div class="kpi-trend">${getEmergencyWeeklyGoalLabel()}</div></div>
         <div class="kpi-card ${metaPeriodo > 0 && diferencaMeta > 0 ? 'red' : 'green'}"><div class="kpi-label">Status da meta</div><div class="kpi-value ${statusMeta.cls}">${statusMeta.label}</div><div class="kpi-trend">${statusMeta.helper}</div></div>
       `;
 
       if (!items.length){
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhuma despesa emergencial encontrada no filtro selecionado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhuma despesa urgente encontrada no filtro selecionado.</td></tr>';
         return;
       }
 
@@ -3644,14 +3644,14 @@ function getFlowRows(){
             <div class="day-lines">
               <div>Entradas: <strong class="entrada">R$ ${formatarValor(row.entradas)}</strong></div>
               <div>Saídas operacionais: <strong class="saida">R$ ${formatarValor(row.saidasOperacionais)}</strong></div>
-              <div>Emergenciais: <strong class="${hasEmergency ? 'saida' : ''}">R$ ${formatarValor(row.saidasEmergenciais)}</strong></div>
+              <div>Urgentes: <strong class="${hasEmergency ? 'saida' : ''}">R$ ${formatarValor(row.saidasEmergenciais)}</strong></div>
               <div>Saídas totais: <strong class="saida">R$ ${formatarValor(row.saidas)}</strong></div>
               <div>Saldo do dia: <strong class="${row.saldo >= 0 ? 'positive' : 'negative'}">R$ ${formatarValor(row.saldo)}</strong></div>
             </div>
             <div class="day-items">
               ${row.items.length ? row.items.map(item => {
                 const valorItem = item.tipo === 'despesa' ? (item.valorRestante || item.valorOriginal || 0) : (item.valor || 0);
-                const origemLabel = item.origem === 'emergencial' ? 'Emergencial' : (item.tipo === 'receita' ? 'Entrada' : 'Operacional');
+                const origemLabel = item.origem === 'emergencial' ? 'Urgente' : (item.tipo === 'receita' ? 'Entrada' : 'Operacional');
                 return `
                   <div>
                     <span>${escapeHtml(item.descricao)} <small class="muted">• ${origemLabel}</small></span>
@@ -3678,7 +3678,7 @@ function getFlowRows(){
         <div class="kpi-card red">
           <div class="kpi-label">Saídas da Semana</div>
           <div class="kpi-value">R$ ${formatarValor(totalSaidas)}</div>
-          <div class="small muted">Operacionais: R$ ${formatarValor(totalSaidasOperacionais)} • Emergenciais: R$ ${formatarValor(totalSaidasEmergenciais)}</div>
+          <div class="small muted">Operacionais: R$ ${formatarValor(totalSaidasOperacionais)} • Urgentes: R$ ${formatarValor(totalSaidasEmergenciais)}</div>
         </div>
         <div class="kpi-card teal">
           <div class="kpi-label">Saldo da Semana</div>
@@ -3771,7 +3771,7 @@ function getFlowRows(){
     function abrirModalLancamento(tipo, origem='lancamentos'){
       if (!isAdmin()) return;
       const isEmergencial = origem === 'emergencial';
-      document.getElementById('modalLancamentoTitulo').textContent = isEmergencial ? 'Nova Despesa Emergencial' : (tipo === 'despesa' ? 'Nova Despesa' : 'Nova Receita');
+      document.getElementById('modalLancamentoTitulo').textContent = isEmergencial ? 'Nova Despesa Urgente' : (tipo === 'despesa' ? 'Nova Despesa' : 'Nova Receita');
       document.getElementById('lancId').value = '';
       document.getElementById('lancTipo').value = tipo;
       document.getElementById('lancOrigem').value = origem;
@@ -3894,7 +3894,7 @@ function getFlowRows(){
       saveState();
       fecharModal('modalLancamento');
       updateAll();
-      toast(origem === 'emergencial' ? 'Despesa emergencial salva com sucesso.' : 'Lançamento salvo com sucesso.', 'success');
+      toast(origem === 'emergencial' ? 'Despesa urgente salva com sucesso.' : 'Lançamento salvo com sucesso.', 'success');
     }
 
     function precisaSenhaParaLancamento(origem='lancamentos', isFinal=false){
@@ -3912,7 +3912,7 @@ function getFlowRows(){
         ui.pendingPasswordAction = { action:'editar', id, tipo, origem };
         document.getElementById('senhaProtecao').value = '';
         document.getElementById('senhaAcaoDescricao').textContent = origem === 'emergencial'
-          ? 'Editar despesa emergencial'
+          ? 'Editar despesa urgente'
           : (isFinal ? 'Editar lançamento realizado' : 'Editar lançamento');
         abrirModal('modalSenha');
         return;
@@ -3957,7 +3957,7 @@ function getFlowRows(){
         ui.pendingPasswordAction = { action:'excluir', id, tipo, origem };
         document.getElementById('senhaProtecao').value = '';
         document.getElementById('senhaAcaoDescricao').textContent = origem === 'emergencial'
-          ? 'Excluir despesa emergencial'
+          ? 'Excluir despesa urgente'
           : (isFinal ? 'Excluir lançamento realizado' : 'Excluir lançamento');
         abrirModal('modalSenha');
         return;
